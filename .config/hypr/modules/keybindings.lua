@@ -102,13 +102,13 @@ hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true 
 -----------------------
 
 hl.bind(
-	"Print",
+	"SHIFT + Print",
 	hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh full"),
 	{ description = "Screenshot full screen" }
 )
 
 hl.bind(
-	"SHIFT + Print",
+	"Print",
 	hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh region"),
 	{ description = "Screenshot region" }
 )
