@@ -46,7 +46,7 @@ tooltip label {
     border-radius: 50%;
     /* background-color: @base; */
     margin: 0px 0px;
-    padding: 4 6 2 0;
+    padding: 4px 6px 2px 0;
 }
 
 #workspaces button:hover {
@@ -336,8 +336,8 @@ window#waybar.empty #window {
 #custom-keyboard-layout {
     color: @peach;
     /* border-bottom: 2px solid @peach; */
-    border-radius: 0 10px 10px 0;
-    margin-right: 10px;
+    border-radius: 10px;
+    margin-right: 5px;
 }
 
 
