@@ -18,6 +18,13 @@ hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("SDL_VIDEODRIVER", "wayland")
 hl.env("CLUTTER_BACKEND", "wayland")
 
+--------------------
+---- GTK THEMES ----
+--------------------
+
+hl.env("GTK_THEME", "Breeze-Dark")
+hl.env("GTK_ICON_THEME", "breeze-dark")
+
 ----------------------------
 ---- XDG SPECIFICATIONS ----
 ----------------------------
