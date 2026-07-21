@@ -73,7 +73,7 @@
     "exec": "sh ~/.config/waybar/scripts/Cava.sh",
     "format": "{}",
     "tooltip": false,
-    "on-click": "swaymsg reload & pkill waybar & waybar",
+    "on-click": "hyprctl reload & pkill waybar & waybar",
     "layer": "below",
     "output": "all"
   },
@@ -248,7 +248,7 @@
     "tooltip": false
   },
   "custom/keyboard-layout": {
-    "exec": "swaymsg -t get_inputs | grep -m1 'xkb_active_layout_name' | cut -d '\"' -f4",
+    "exec": "hyprctl devices -j | jq -r '.keyboards[0].active_keymap'",
     // Interval set only as a fallback, as the value is updated by signal
     "interval": 1,
     "format": "  {}", // Icon: keyboard
