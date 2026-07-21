@@ -73,7 +73,7 @@
     "exec": "sh ~/.config/waybar/scripts/Cava.sh",
     "format": "{}",
     "tooltip": false,
-    "on-click": "hyprctl reload & pkill waybar & waybar",
+    "on-click": "pkill cava || sh ~/.config/cava/config1",
     "layer": "below",
     "output": "all"
   },
@@ -259,7 +259,7 @@
   },
   "custom/launcher": {
     "format": "",
-    "on-click": "rofi -show drun -replace",
+    "on-click": "~/.config/waybar/scripts/rofi-toggle.sh",
     "tooltip": false
   }
 }
