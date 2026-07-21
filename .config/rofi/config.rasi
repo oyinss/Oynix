@@ -1,0 +1,6 @@
+configuration {
+    // Use a Hyprland-backed script mode to enumerate native Wayland windows.
+    modes: "drun,window:~/.config/rofi/launchers/rofi-windows.sh,run";
+}
+
+@theme "~/.config/rofi/launchers/launcher.rasi"

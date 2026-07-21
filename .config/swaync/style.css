@@ -1,0 +1,116 @@
+:root {
+  --cc-bg: rgba(36, 39, 58, 0.95) !important;
+  --noti-border-color: rgba(54, 58, 79, 0.8) !important;
+  --noti-bg: 36, 39, 58 !important;
+  --noti-bg-alpha: 0.95 !important;
+  --noti-bg-darker: rgba(30, 32, 48, 0.95) !important;
+  --noti-bg-hover: rgba(54, 58, 79, 0.8) !important;
+  --noti-bg-focus: rgba(69, 77, 100, 0.6) !important;
+  --noti-close-bg: rgba(54, 58, 79, 0.8) !important;
+  --noti-close-bg-hover: rgba(237, 135, 150, 0.8) !important;
+  --text-color: #cad3f5 !important;
+  --text-color-disabled: #a5adcb !important;
+  --bg-selected: #c6a0f6 !important;
+  --notification-icon-size: 64px !important;
+  --notification-app-icon-size: calc(var(--notification-icon-size) / 3) !important;
+  --notification-group-icon-size: 32px !important;
+  --border: 1px solid var(--noti-border-color) !important;
+  --border-radius: 10px !important;
+  --notification-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 1px 3px 1px rgba(0, 0, 0, 0.7), 0 2px 6px 2px rgba(0, 0, 0, 0.3) !important;
+  --font-size-body: 15px !important;
+  --font-size-summary: 16px !important;
+}
+
+.notification {
+  background-color: rgba(36, 39, 58, 0.95) !important;
+  border: 1px solid rgba(54, 58, 79, 0.8) !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  margin: 5px 0 !important;
+  color: #cad3f5 !important;
+}
+
+.summary {
+  color: #cad3f5 !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+}
+
+.body {
+  color: #a5adcb !important;
+  font-size: 15px !important;
+}
+
+.time {
+  color: #6e738d !important;
+  font-size: 11px !important;
+}
+
+.close-button {
+  background-color: rgba(54, 58, 79, 0.8) !important;
+  color: #cad3f5 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  padding: 4px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+}
+
+.close-button:hover {
+  background-color: #ed8796 !important;
+  color: #24273a !important;
+}
+
+.control-center {
+  background-color: rgba(36, 39, 58, 0.95) !important;
+  border: 1px solid rgba(54, 58, 79, 0.8) !important;
+  border-radius: 10px !important;
+  padding: 10px !important;
+}
+
+.widget-title {
+  color: #cad3f5 !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  padding: 8px 10px !important;
+}
+
+.widget-value {
+  color: #c6a0f6 !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+}
+
+.action-button {
+  background-color: #c6a0f6 !important;
+  color: #24273a !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 6px 14px !important;
+  margin: 0 4px 0 0 !important;
+  font-weight: bold !important;
+  font-size: 12px !important;
+}
+
+.action-button:hover {
+  background-color: #b7bdf8 !important;
+}
+
+.empty {
+  color: #6e738d !important;
+  font-size: 13px !important;
+  padding: 20px !important;
+}
+
+.notification.low {
+  border-left: 3px solid #8aadf4 !important;
+}
+
+.notification.normal {
+  border-left: 3px solid #c6a0f6 !important;
+}
+
+.notification.urgent {
+  border-left: 3px solid #ed8796 !important;
+}
