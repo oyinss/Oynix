@@ -1,0 +1,22 @@
+[[plugin.prepend_fetchers]]
+group = "git"
+mime  = "*"
+name  = "*"
+run   = "git"
+
+[[plugin.prepend_fetchers]]
+group = "git"
+mime  = "*"
+name  = "*/"
+run   = "git"
+
+[plugin]
+  append_previewers = [
+    { mime = "*", name = "*", run = "file-extra-metadata" },
+  ]
+  append_spotters = [
+    { mime = "*", name = "*", run = "file-extra-metadata" },
+  ]
+  spotters = [
+    { mime = "*", name = "*", run = "file-extra-metadata" },
+  ]
