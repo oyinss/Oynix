@@ -162,10 +162,10 @@ tooltip label {
 
 #window {
     border-radius: 10px;
-    color: @base;
+    color: @text;
     margin-left: 5px;
     margin-right: 5px;
-    background-color: @mauve;
+    background-color: transparent;
 }
 
 window#waybar.empty #window {

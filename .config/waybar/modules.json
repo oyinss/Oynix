@@ -89,7 +89,7 @@
             "(.*) Microsoft Teams": "$1"
         },
         "separate-outputs": true,
-    "format": "<span color=\"#24273a\" style=\"italic\">{}</span>"
+    "format": "{}"
   },
   "idle_inhibitor": {
     "format": "{icon}",
