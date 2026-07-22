@@ -7,8 +7,8 @@
 local programs = require("modules.programs")
 local main_mod = "SUPER"
 
-hl.bind(main_mod .. " + Q", hl.dsp.exec_cmd(programs.terminal))
-hl.bind(main_mod .. " + C", hl.dsp.window.close())
+hl.bind(main_mod .. " + Q", hl.dsp.window.close())
+hl.bind(main_mod .. " + C", hl.dsp.exec_cmd(programs.terminal))
 hl.bind(
 	main_mod .. " + M",
 	hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'")
