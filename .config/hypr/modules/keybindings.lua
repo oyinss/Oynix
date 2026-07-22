@@ -124,3 +124,9 @@ hl.bind(
 	hl.dsp.exec_cmd("cliphist list | rofi -dmenu | cliphist decode | wl-copy"),
 	{ description = "Clipboard history" }
 )
+
+hl.bind(
+	"SUPER + N",
+	hl.dsp.exec_cmd("swaync-client -t -sw"),
+	{ description = "Notification panel" }
+)
