@@ -33,10 +33,6 @@ hl.bind(main_mod .. " + down", hl.dsp.focus({ direction = "down" }))
 ---- SCROLLING LAYOUT ----
 --------------------------
 
--- Navigate between columns while keeping the focused column in view.
-hl.bind(main_mod .. " + H", hl.dsp.layout("focus l"), { description = "Focus scrolling column left" })
-hl.bind(main_mod .. " + L", hl.dsp.layout("focus r"), { description = "Focus scrolling column right" })
-
 -- Reorder the current column.
 hl.bind(main_mod .. " + SHIFT + H", hl.dsp.layout("swapcol l"), { description = "Swap scrolling column left" })
 hl.bind(main_mod .. " + SHIFT + L", hl.dsp.layout("swapcol r"), { description = "Swap scrolling column right" })
