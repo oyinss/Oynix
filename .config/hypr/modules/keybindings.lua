@@ -19,7 +19,10 @@ hl.bind(main_mod .. " + F", hl.dsp.window.fullscreen({ action = "toggle", mode =
 hl.bind(main_mod .. " + A", hl.dsp.exec_cmd(programs.application_menu))
 hl.bind(main_mod .. " + W", hl.dsp.exec_cmd(programs.window_menu))
 hl.bind(main_mod .. " + P", hl.dsp.window.pseudo())
-hl.bind(main_mod .. " + J", hl.dsp.layout("togglesplit"))
+hl.bind(
+	main_mod .. " + Return",
+	hl.dsp.exec_cmd("~/.config/hypr/scripts/float-terminal.sh")
+)
 
 hl.bind(main_mod .. " + left", hl.dsp.focus({ direction = "left" }))
 hl.bind(main_mod .. " + right", hl.dsp.focus({ direction = "right" }))
