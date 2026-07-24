@@ -129,3 +129,9 @@ hl.bind(
 	hl.dsp.exec_cmd("swaync-client -t -sw"),
 	{ description = "Notification panel" }
 )
+
+hl.bind(
+	"SUPER + SHIFT + B",
+	hl.dsp.exec_cmd("killall waybar; waybar > /dev/null 2>&1 &"),
+	{ description = "Restart waybar" }
+)

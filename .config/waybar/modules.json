@@ -202,7 +202,7 @@
   "network": {
     // "interface": "wlp2s0", // (Optional) To force the use of this interface
     "format": "⚠  Disabled",
-    "format-wifi": "",
+    "format-wifi": " {signalStrength}%",
     // "format-ethernet": " {ifname}: {ipaddr}/{cidr}",
     "format-ethernet": "  Wired",
     "format-disconnected": "⚠  Disconnected",
