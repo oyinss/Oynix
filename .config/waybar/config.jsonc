@@ -28,7 +28,7 @@
     // "disk",
     "group/hardware",
     "battery",
-    "network",
+    "custom/network",
     "idle_inhibitor",
     "custom/power"
   ],

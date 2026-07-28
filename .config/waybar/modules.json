@@ -131,8 +131,8 @@
   },
 
   // System
-  "custom/system": {
-    "format": "",
+"custom/system": {
+    "format": "",
     "tooltip": false
   },
   "cpu": {
@@ -199,18 +199,11 @@
     // "format-full": "",
     "format-icons": ["", "", "", "", ""]
   },
-  "network": {
-    // "interface": "wlp2s0", // (Optional) To force the use of this interface
-    "format": "⚠  Disabled",
-    "format-wifi": " {signalStrength}%",
-    // "format-ethernet": " {ifname}: {ipaddr}/{cidr}",
-    "format-ethernet": "  Wired",
-    "format-disconnected": "⚠  Disconnected",
-    "tooltip-format": " {ifname} via {gwaddri}",
-    "tooltip-format-wifi": "   {essid} ({signalStrength}%)",
-    "tooltip-format-ethernet": "  {ifname} ({ipaddr}/{cidr})",
-    "tooltip-format-disconnected": "⚠  Disconnected",
-    // "on-click": "ghostty -e nmtui"
+  "custom/network": {
+    "interval": 5,
+    "exec": "~/.config/waybar/scripts/network-strength.sh",
+    "return-type": "json",
+    "format": "{}",
     "on-click": "nm-connection-editor"
   },
   "pulseaudio": {

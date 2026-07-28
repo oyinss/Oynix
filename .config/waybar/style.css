@@ -23,7 +23,7 @@
     color: @lavender;
     border: 0;
     padding: 0 0;
-    font-family: "Fira Sans Semibold", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    font-family: "CaskaydiaCove Nerd Font", "Fira Sans Semibold", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
 }
 
 window#waybar {
@@ -102,7 +102,7 @@ tooltip label {
 #temperature,
 #custom-keyboard-layout,
 #backlight,
-#network,
+#custom-network,
 #pulseaudio,
 #mode,
 #window,
@@ -254,19 +254,19 @@ window#waybar.empty #window {
     color: @sky;
 }
 
-#network.disabled {
+#custom-network.disabled {
     color: #bf616a;
     /* border-bottom: 2px solid #bf616a; */
 }
 
-#network {
+#custom-network {
     color: @green;
     /* border-bottom: 2px solid @green; */
     border-radius: 10px;
     margin-right: 5px;
 }
 
-#network.disconnected {
+#custom-network.disconnected {
     color: #bf616a;
     /* border-bottom: 2px solid #bf616a; */
 }
@@ -392,15 +392,15 @@ window#waybar.empty #window {
      color: #d3869b;
  }
  
- #network {
+ #custom-network {
      color: #8fbcbb;
  }
  
- #network.disabled {
+ #custom-network.disabled {
      color: #bf616a;
  }
  
- #network.disconnected {
+ #custom-network.disconnected {
      color: #bf616a;
  }
  

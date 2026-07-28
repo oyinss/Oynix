@@ -126,12 +126,68 @@ hl.bind(
 
 hl.bind(
 	"SUPER + N",
-	hl.dsp.exec_cmd("swaync-client -t -sw"),
-	{ description = "Notification panel" }
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide toggleNotificationCenter"),
+	{ description = "Notification center" }
 )
 
 hl.bind(
 	"SUPER + SHIFT + B",
 	hl.dsp.exec_cmd("killall waybar; waybar > /dev/null 2>&1 &"),
 	{ description = "Restart waybar" }
+)
+
+hl.bind(
+	"SUPER + K",
+	hl.dsp.exec_cmd("~/.config/hypr/scripts/keybindings.sh"),
+	{ description = "Show keybindings" }
+)
+
+---------------------
+---- TIDE ISLAND ----
+---------------------
+
+hl.bind(
+	"SUPER + Tab",
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call overview toggle"),
+	{ description = "Workspace overview" }
+)
+hl.bind(
+	"SUPER + Right",
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide swipeRight"),
+	{ description = "Tide swipe right" }
+)
+hl.bind(
+	"SUPER + Left",
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide showCustom"),
+	{ description = "Tide custom page" }
+)
+hl.bind(
+	"SUPER + Down",
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide showClock"),
+	{ description = "Tide clock" }
+)
+hl.bind(
+	"SUPER + SHIFT + M",
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide togglePlayer"),
+	{ description = "Tide music player" }
+)
+hl.bind(
+	"SUPER + SHIFT + C",
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide toggleControlCenter"),
+	{ description = "Tide control center" }
+)
+hl.bind(
+	"SUPER + SHIFT + W",
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide toggleWallpaperPicker"),
+	{ description = "Tide wallpaper picker" }
+)
+hl.bind(
+	"SUPER + slash",
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide toggleApplicationLauncher"),
+	{ description = "Tide app launcher" }
+)
+hl.bind(
+	"SUPER + SHIFT + F",
+	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call island toggle"),
+	{ description = "Toggle island" }
 )
