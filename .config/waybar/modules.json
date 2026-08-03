@@ -17,46 +17,22 @@
       "10": ""
     }
   },
-  "mpd": {
-    "tooltip": true,
-    "tooltip-format": "{artist} - {album} - {title} - Total Time : {totalTime:%M:%S}",
-    "format": " {elapsedTime:%M:%S}",
-    "format-disconnected": "⚠  Disconnected",
-    "format-stopped": " Not Playing",
-    "on-click": "mpc toggle",
-    "state-icons": {
-      "playing": "",
-      "paused": ""
-    }
+  "custom/playerctl-prev": {
+    "format": "󰒮",
+    "on-click": "playerctl previous",
+    "tooltip": false
   },
-  "mpd#2": {
-    "format": "",
-    "format-disconnected": "",
-    "format-paused": "",
-    "format-stopped": "",
-    // Commands to execute on events
-    "on-click": "mpc -q pause && mpc -q prev && mpc -q start"
+  "custom/playerctl-play": {
+    "exec": "~/.config/waybar/scripts/playerctl-status.sh",
+    "return-type": "json",
+    "format": "{text}",
+    "on-click": "playerctl play-pause",
+    "interval": 1
   },
-  "mpd#3": {
-    "interval": 1,
-    "format": "{stateIcon}",
-    "format-disconnected": "",
-    "format-paused": "{stateIcon}",
-    "format-stopped": "",
-    "state-icons": {
-      "paused": "",
-      "playing": ""
-    },
-    // Commands to execute on events
-    "on-click": "mpc toggle"
-  },
-  "mpd#4": {
-    "format": "",
-    "format-disconnected": "",
-    "format-paused": "",
-    "format-stopped": "",
-    // Commands to execute on events
-    "on-click": "mpc -q pause && mpc -q next && mpc -q start"
+  "custom/playerctl-next": {
+    "format": "󰒭",
+    "on-click": "playerctl next",
+    "tooltip": false
   },
   "custom/swap": {
     "on-click": "~/.config/waybar/scripts/swap.sh",
@@ -73,7 +49,6 @@
     "exec": "sh ~/.config/waybar/scripts/Cava.sh",
     "format": "{}",
     "tooltip": false,
-    "on-click": "pkill cava || sh ~/.config/cava/config1",
     "layer": "below",
     "output": "all"
   },
@@ -125,7 +100,7 @@
       "on-scroll-up": "shift_up",
       "on-scroll-down": "shift_down"
     },
-    "format": "{:%a %d %b | %I:%M %p}", //12 hour format
+    "format": "{:%I:%M %p}",
     "format-alt": "  {:%Y-%m-%d  %H:%M:%S}",
     "interval": 1
   },
@@ -205,6 +180,20 @@
     "return-type": "json",
     "format": "{}",
     "on-click": "nm-connection-editor"
+  },
+  "custom/network-down": {
+    "interval": 1,
+    "exec": "sh ~/.config/waybar/scripts/network-speed.sh rx",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": false
+  },
+  "custom/network-up": {
+    "interval": 1,
+    "exec": "sh ~/.config/waybar/scripts/network-speed.sh tx",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": false
   },
   "pulseaudio": {
     // "scroll-step": 5,

@@ -132,8 +132,8 @@ hl.bind(
 
 hl.bind(
 	"SUPER + SHIFT + B",
-	hl.dsp.exec_cmd("killall waybar; waybar > /dev/null 2>&1 &"),
-	{ description = "Restart waybar" }
+	hl.dsp.exec_cmd("pkill -USR2 -x waybar"),
+	{ description = "Reload waybar" }
 )
 
 hl.bind(

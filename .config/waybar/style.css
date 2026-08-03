@@ -103,6 +103,8 @@ tooltip label {
 #custom-keyboard-layout,
 #backlight,
 #custom-network,
+#custom-network-down,
+#custom-network-up,
 #pulseaudio,
 #mode,
 #window,
@@ -152,6 +154,33 @@ tooltip label {
 #mpd.4 {
     background-color: @base;
     font-size: 14px;
+}
+
+#custom-playerctl-prev,
+#custom-playerctl-play,
+#custom-playerctl-next {
+    padding: 5px 10px;
+    border-style: solid;
+    background-color: @base;
+    margin: 8px 0;
+    font-size: 14px;
+    min-width: 20px;
+}
+
+#custom-playerctl-prev {
+    border-radius: 10px 0 0 10px;
+    margin-left: 5px;
+}
+
+#custom-playerctl-play {
+    border-radius: 0;
+    color: @green;
+    font-size: 17px;
+}
+
+#custom-playerctl-next {
+    border-radius: 0 10px 10px 0;
+    margin-right: 10px;
 }
 
 #mode {
@@ -269,6 +298,32 @@ window#waybar.empty #window {
 #custom-network.disconnected {
     color: #bf616a;
     /* border-bottom: 2px solid #bf616a; */
+}
+
+#custom-network-down,
+#custom-network-up {
+    color: @blue;
+}
+
+#custom-network-down {
+    border-radius: 10px 0 0 10px;
+    padding-right: 4px;
+}
+
+#custom-network-up {
+    border-radius: 0 10px 10px 0;
+    padding-left: 4px;
+    margin-right: 5px;
+}
+
+#custom-network-down.megabytes,
+#custom-network-up.megabytes {
+    color: @green;
+}
+
+#custom-network-down.disconnected,
+#custom-network-up.disconnected {
+    color: @red;
 }
 
 #pulseaudio {
