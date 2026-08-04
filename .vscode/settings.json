@@ -1,8 +1,7 @@
 {
-  "Lua.workspace.library": [
-    "/usr/share/hypr/stubs"
-  ],
+  "Lua.workspace.library": ["/usr/share/hypr/stubs"],
   "files.associations": {
     "**/.config/waybar/modules.json": "jsonc"
-  }
+  },
+  "pendant.notifications.agentFinished": true
 }
