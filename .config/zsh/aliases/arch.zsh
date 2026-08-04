@@ -43,8 +43,8 @@ arch() {
   local quit_label="󰅙 Quit"
 
   choice=$(printf "%s\n" \
-    "${yellow}󰑓${reset} ${purple}Update databases only (paru -Sy)${reset}" \
     "${green}󰚰${reset} ${purple}Full system upgrade (paru -Syu)${reset}" \
+    "${yellow}󰑓${reset} ${purple}Update databases only (paru -Sy)${reset}" \
     "${green}󰏖${reset} ${purple}Install / upgrade a package${reset}" \
     "${red}󰆴${reset} ${purple}Remove package + unneeded deps (paru -Rs)${reset}" \
     "${red}󰚌${reset} ${purple}Remove package + all deps (paru -Rns)${reset}" \
@@ -59,7 +59,7 @@ arch() {
     "${orange}󰜉${reset} ${purple}Clean ALL cache (paru -Scc)${reset}" \
     "${orange}󰌾${reset} ${purple}Unlock pacman database${reset}" \
     "${red}󰅙${reset} ${purple}Quit${reset}" \
-    | fzf --ansi --height 18 --prompt "Arch › " --border)
+    | command fzf --no-preview --ansi --height 18 --prompt "Arch › " --border)
 
   plain_choice=$(print -r -- "$choice" | sed $'s/\x1B\\[[0-9;]*[A-Za-z]//g')
 
