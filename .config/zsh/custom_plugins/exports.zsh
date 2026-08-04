@@ -97,6 +97,7 @@ fi
 # PATH
 # -------------------------------------------------------
 path=(
+  "$HOME/.bun/bin"
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
   "$HOME/.local/share/go/bin"
