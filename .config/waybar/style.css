@@ -14,8 +14,8 @@
 
 
 /* -----------------------------------------------------------------------------
-  * Base styles
-  * -------------------------------------------------------------------------- */
+   * Base styles
+   * -------------------------------------------------------------------------- */
 
 /* Reset all styles */
 
@@ -23,30 +23,25 @@
     color: @lavender;
     border: 0;
     padding: 0 0;
-    font-family: "CaskaydiaCove Nerd Font", "Fira Sans Semibold", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Fira Sans Semibold", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    transition: all 0.5s ease;
 }
 
 window#waybar {
-    border: 0px solid rgba(0, 0, 0, 0);
-    background-color: rgba(0, 0, 0, 0);
-}
-
-tooltip {
-    background-color: @base;
-    border-radius: 10px;
-    border: 1px solid @surface0;
-}
-
-tooltip label {
-    color: @text;
+    border-bottom: 4px solid shade(@base, 1.1);
+    background-color: shade(#1e1e2e, 0.95);
 }
 
 #workspaces button {
-    color: @text;
+    color: @base;
     border-radius: 50%;
     /* background-color: @base; */
     margin: 0px 0px;
-    padding: 4px 6px 2px 0;
+    padding: 4 6 2 0;
+}
+
+#workspaces button:hover * {
+    color: @mauve;
 }
 
 #workspaces button:hover {
@@ -57,11 +52,6 @@ tooltip label {
     /* Remove predefined text-shadow */
     border: 0px;
     background: none;
-}
-
-#workspaces button:hover * {
-    color: @mauve;
-    background-color: @base;
 }
 
 #workspaces * {
@@ -93,6 +83,7 @@ tooltip label {
 
 #clock,
 #custom-swap,
+#custom-background,
 #custom-cava-internal,
 #battery,
 #cpu,
@@ -102,28 +93,37 @@ tooltip label {
 #temperature,
 #custom-keyboard-layout,
 #backlight,
-#custom-network,
-#custom-network-down,
-#custom-network-up,
+#network,
 #pulseaudio,
 #mode,
 #window,
 #tray,
 #custom-power,
 #custom-pacman,
-#custom-launcher,
 #custom-system,
 #mpd {
     padding: 5px 8px;
     border-style: solid;
-    background-color: shade(@base, 1);
+    background-color: shade(@base, 1.1);
     opacity: 1;
     margin: 8px 0;
 }
 
 /* -----------------------------------------------------------------------------
-  * Module styles
-  * -------------------------------------------------------------------------- */
+   * Module styles
+   * -------------------------------------------------------------------------- */
+
+#mode {
+    border-radius: 10px;
+    color: @mauve;
+    margin-right: 5px;
+}
+
+#custom-cava-internal {
+    border-radius: 10px;
+    color: @mauve;
+}
+
 #mpd {
     border-radius: 10px;
     color: @mauve;
@@ -156,60 +156,30 @@ tooltip label {
     font-size: 14px;
 }
 
-#custom-playerctl-prev,
-#custom-playerctl-play,
-#custom-playerctl-next {
-    padding: 5px 10px;
-    border-style: solid;
-    background-color: @base;
-    margin: 8px 0;
-    font-size: 14px;
-    min-width: 20px;
-}
-
-#custom-playerctl-prev {
-    border-radius: 10px 0 0 10px;
-    margin-left: 5px;
-}
-
-#custom-playerctl-play {
-    border-radius: 0;
-    color: @green;
-    font-size: 17px;
-}
-
-#custom-playerctl-next {
-    border-radius: 0 10px 10px 0;
-    margin-right: 10px;
-}
-
-#mode {
-    border-radius: 10px;
-    color: @mauve;
-    margin-right: 5px;
-}
-
 #window {
     border-radius: 10px;
-    color: @text;
+    color: @base;
     margin-left: 5px;
     margin-right: 5px;
-    background-color: transparent;
+    background-color: @mauve;
 }
 
 window#waybar.empty #window {
     background-color:transparent;
 }
-#custom-cava-internal {
-    border-radius: 10px;
-    color: @mauve;
-}
 
 #custom-swap {
     border-radius: 10px;
     color: @base;
-    margin-left: 15px;
+    margin-left: 10px;
     background-color: @mauve;
+}
+
+#custom-background {
+    border-radius: 0px 10px 10px 0px;
+    background-color: @base;
+    color: white;
+    padding: 5px 14px 5px 5px;
 }
 
 #clock {
@@ -227,7 +197,6 @@ window#waybar.empty #window {
 
 #battery {
     color: @green;
-    /* border-bottom: 2px solid @sky; */
     /* border-bottom: 2px solid #d8dee9; */
     border-radius: 0 10px 10px 0;
     margin-right: 10px;
@@ -249,7 +218,6 @@ window#waybar.empty #window {
     color: @yellow;
     /* border-bottom: 2px solid #81a1c1; */
 }
-
 
 #battery.critical:not(.charging) {
     color: #bf616a;
@@ -283,54 +251,26 @@ window#waybar.empty #window {
     color: @sky;
 }
 
-#custom-network.disabled {
+#network.disabled {
     color: #bf616a;
     /* border-bottom: 2px solid #bf616a; */
 }
 
-#custom-network {
+#network {
     color: @green;
     /* border-bottom: 2px solid @green; */
     border-radius: 10px;
     margin-right: 5px;
 }
 
-#custom-network.disconnected {
+#network.disconnected {
     color: #bf616a;
     /* border-bottom: 2px solid #bf616a; */
-}
-
-#custom-network-down,
-#custom-network-up {
-    color: @blue;
-}
-
-#custom-network-down {
-    border-radius: 10px 0 0 10px;
-    padding-right: 4px;
-}
-
-#custom-network-up {
-    border-radius: 0 10px 10px 0;
-    padding-left: 4px;
-    margin-right: 5px;
-}
-
-#custom-network-down.megabytes,
-#custom-network-up.megabytes {
-    color: @green;
-}
-
-#custom-network-down.disconnected,
-#custom-network-up.disconnected {
-    color: @red;
 }
 
 #pulseaudio {
     color: @flamingo;
     /* border-bottom: 2px solid @flamingo; */
-    border-radius: 10px;
-    margin-right: 5px;
 }
 
 #pulseaudio.muted {
@@ -365,11 +305,10 @@ window#waybar.empty #window {
 #custom-power {}
 
 #custom-launcher {
-    background-color: @mauve;
-    color: @base;
-    border-radius: 10px;
-    padding: 5px 10px;
-    margin-left: 15px;
+    background-color: shade(@base, 1.1);
+    color: @mauve;
+    border-radius: 0px 15px 0px 0px;
+    padding: 5px 10px 5px 10px;
 }
 
 #custom-power {
@@ -381,96 +320,254 @@ window#waybar.empty #window {
     padding: 5px 10px;
 }
 
-/* #window { */
-/*     border-radius: 10px; */
-/*     color: @base; */
-/*     margin-left: 15px; */
-/*     background-color: @mauve; */
-/* } */
+#window {
+    border-style: hidden;
+    margin-left: 10px;
+    /* margin-top:1px;  
+      padding: 8px 1rem; */
+    margin-right: 10px;
+    color: #eceff4;
+}
 
 #custom-keyboard-layout {
     color: @peach;
     /* border-bottom: 2px solid @peach; */
-    border-radius: 10px;
-    margin-right: 5px;
+    border-radius: 0 10px 10px 0;
+    margin-right: 10px;
 }
 
 
 
 /* window#waybar {
-     background: #2d2a2e;
- }
- 
- * {
-     color: #c8b9a9;
-     font-family: Ubuntu Mono, sans-serif;
-     font-size: 12px;
- }
- 
- #workspaces button.focused {
-     color: #f2e5bc;
- }
- 
- #workspaces button {
-     color: #c8b9a9;
- }
- 
- .separator {
-     background-color: #c8b9a9;
- }
- 
- #mode {
-     color: #ebcb8b;
- }
- 
- #clock {
-     color: #a3be8c;
- }
- 
- #battery {
-     color: #d8dee9;
- }
- 
- #battery.charging {
-     color: #b48ead;
- }
- 
- #battery.critical:not(.charging) {
-     color: #bf616a;
- }
- 
- #cpu {
-     color: #a3be8c;
- }
- 
- #memory {
-     color: #d3869b;
- }
- 
- #custom-network {
-     color: #8fbcbb;
- }
- 
- #custom-network.disabled {
-     color: #bf616a;
- }
- 
- #custom-network.disconnected {
-     color: #bf616a;
- }
- 
- #pulseaudio {
-     color: #b48ead;
- }
- 
- #pulseaudio.muted {
-     color: #bf616a;
- }
- 
- #temperature {
-     color: #8fbcbb;
- }
- 
- #temperature.critical {
-     color: #bf616a;
- } */
+      background: #2d2a2e;
+  }
+  
+  * {
+      color: #c8b9a9;
+      font-family: Ubuntu Mono, sans-serif;
+      font-size: 12px;
+  }
+  
+  #workspaces button.focused {
+      color: #f2e5bc;
+  }
+  
+  #workspaces button {
+      color: #c8b9a9;
+  }
+  
+  .separator {
+      background-color: #c8b9a9;
+  }
+  
+  #mode {
+      color: #ebcb8b;
+  }
+  
+  #clock {
+      color: #a3be8c;
+  }
+  
+  #battery {
+      color: #d8dee9;
+  }
+  
+  #battery.charging {
+      color: #b48ead;
+  }
+  
+  #battery.critical:not(.charging) {
+      color: #bf616a;
+  }
+  
+  #cpu {
+      color: #a3be8c;
+  }
+  
+  #memory {
+      color: #d3869b;
+  }
+  
+  #network {
+      color: #8fbcbb;
+  }
+  
+  #network.disabled {
+      color: #bf616a;
+  }
+  
+  #network.disconnected {
+      color: #bf616a;
+  }
+  
+  #pulseaudio {
+      color: #b48ead;
+  }
+  
+  #pulseaudio.muted {
+      color: #bf616a;
+  }
+  
+  #temperature {
+      color: #8fbcbb;
+  }
+  
+  #temperature.critical {
+      color: #bf616a;
+  } */
+
+/* Keep the solid-background theme monochrome. These rules intentionally
+ * come last so module state colours cannot override them. */
+#clock,
+#custom-playerctl-prev,
+#custom-playerctl-play,
+#custom-playerctl-next,
+#backlight,
+#custom-network-down,
+#custom-network-down.megabytes,
+#custom-network-down.disconnected,
+#custom-network-up,
+#custom-network-up.megabytes,
+#custom-network-up.disconnected,
+#pulseaudio,
+#pulseaudio.muted,
+#custom-keyboard-layout,
+#temperature,
+#temperature.critical,
+#disk,
+#cpu,
+#memory,
+#custom-system,
+#battery,
+#battery.charging,
+#battery.warning:not(.charging),
+#battery.critical:not(.charging),
+#custom-codexbar,
+#custom-codexbar.ok,
+#custom-codexbar.warning,
+#custom-codexbar.critical,
+#custom-codexbar.stale,
+#custom-network,
+#custom-network.disabled,
+#custom-network.disconnected,
+#idle_inhibitor,
+#custom-power {
+    color: #eceff4;
+}
+
+/* Right-side pill layout for the solid-background theme. */
+#custom-network-down,
+#custom-network-up,
+#custom-network,
+#custom-codexbar {
+    padding: 5px 8px;
+    border-style: solid;
+    background-color: shade(@base, 1.1);
+    opacity: 1;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+/* Download and upload speeds share one joined background. */
+#custom-network-down {
+    border-radius: 10px 0 0 10px;
+    margin-left: 5px;
+    padding-right: 4px;
+}
+
+#custom-network-up {
+    border-radius: 0 10px 10px 0;
+    margin-right: 10px;
+    padding-left: 4px;
+}
+
+/* Volume and keyboard layout are separate pills. */
+#pulseaudio {
+    border-radius: 10px;
+    margin-left: 0;
+    margin-right: 5px;
+}
+
+#custom-keyboard-layout {
+    border-radius: 10px;
+    margin-left: 5px;
+    margin-right: 10px;
+}
+
+/* Codex usage and network strength each get their own background. */
+#custom-codexbar,
+#custom-network {
+    border-radius: 10px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+/* Lock and power stay monochrome in this theme. */
+#idle_inhibitor,
+#custom-power {
+    color: #eceff4;
+    background-color: shade(@base, 1.1);
+}
+
+/* Keep the left side monochrome in the solid-background theme too. */
+#custom-launcher,
+#custom-swap,
+#submap,
+#custom-cava-internal,
+#tray {
+    color: #eceff4;
+    background-color: shade(@base, 1.1);
+}
+
+#custom-launcher,
+#custom-swap,
+#submap,
+#custom-cava-internal,
+#tray {
+    border-radius: 10px;
+}
+
+#workspaces button,
+#workspaces button.focused,
+#workspaces button.active,
+#workspaces button * ,
+#workspaces button.focused * ,
+#workspaces button.active * {
+    color: #eceff4;
+}
+
+/* Previous, play/pause and next share one controller background. */
+#custom-playerctl-prev,
+#custom-playerctl-play,
+#custom-playerctl-next {
+    color: #eceff4;
+    background-color: shade(@base, 1.1);
+    padding: 5px 7px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+#custom-playerctl-prev {
+    border-radius: 10px 0 0 10px;
+    padding-left: 10px;
+}
+
+#custom-playerctl-play {
+    border-radius: 0;
+}
+
+#custom-playerctl-next {
+    border-radius: 0 10px 10px 0;
+    padding-right: 10px;
+}
+
+/* Highlight sustained MB/s traffic while keeping normal speeds monochrome. */
+#custom-network-down.kilobytes,
+#custom-network-up.kilobytes {
+    color: @yellow;
+}
+
+#custom-network-down.megabytes,
+#custom-network-up.megabytes {
+    color: @green;
+}

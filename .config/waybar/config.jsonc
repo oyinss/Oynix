@@ -23,6 +23,7 @@
     "temperature",
     "group/hardware",
     "battery",
+    "custom/codexbar",
     "custom/network",
     "idle_inhibitor",
     "custom/power"

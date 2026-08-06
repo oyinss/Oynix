@@ -34,5 +34,5 @@ hl.window_rule({
 hl.window_rule({
 	name = "float-terminal",
 	match = { class = "kitty-float" },
-	float = true,
+	workspace = "special:magic",
 })

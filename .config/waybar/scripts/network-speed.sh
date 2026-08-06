@@ -41,7 +41,7 @@ if [ "$rate" -ge 1000000 ]; then
   class="megabytes"
 elif [ "$rate" -ge 1000 ]; then
   speed=$(awk -v bytes="$rate" 'BEGIN { printf "%.0f KB/s", bytes / 1000 }')
-  class="normal"
+  class="kilobytes"
 else
   speed="$rate B/s"
   class="normal"
