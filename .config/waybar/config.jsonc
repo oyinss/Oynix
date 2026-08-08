@@ -19,7 +19,6 @@
     "custom/network-down",
     "custom/network-up",
     "pulseaudio",
-    "custom/keyboard-layout",
     "temperature",
     "group/hardware",
     "battery",
