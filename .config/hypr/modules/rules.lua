@@ -36,3 +36,11 @@ hl.window_rule({
 	match = { class = "kitty-float" },
 	workspace = "special:magic",
 })
+
+hl.window_rule({
+	name = "clipboard-manager",
+	match = { class = "org.hypr.ClipboardManager" },
+	float = true,
+	size = "50% 60%",
+	center = true,
+})

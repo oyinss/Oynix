@@ -120,8 +120,8 @@ hl.bind(
 
 hl.bind(
 	"SUPER + V",
-	hl.dsp.exec_cmd("cliphist list | rofi -dmenu | cliphist decode | wl-copy"),
-	{ description = "Clipboard history" }
+	hl.dsp.exec_cmd("$HOME/.local/bin/hypr-clipboard-manager"),
+	{ description = "Clipboard Manager" }
 )
 
 hl.bind(

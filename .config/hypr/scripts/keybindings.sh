@@ -63,7 +63,7 @@ parse_keybindings() {
     echo "CTRL + Print         → Screenshot window"
     echo ""
     echo "=== Utilities ==="
-    echo "SUPER + V            → Clipboard history"
+    echo "SUPER + V            → Clipboard Manager"
     echo "SUPER + N            → Notification center (Tide)"
     echo "SUPER + SHIFT + B    → Reload waybar"
     echo "SUPER + K            → Show keybindings"
