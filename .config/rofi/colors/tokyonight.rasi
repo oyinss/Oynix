@@ -3,14 +3,22 @@
  * Author : Levi Lacoss (fishyfishfish55)
  * Github : @fishyfishfish55
  *
- * Colors
+ * Colors — Tokyo Night Storm
+ *
+ * Matches the Tokyo Night Storm palette used across the desktop:
+ *   background      #1a1b26   (deep background)
+ *   background-alt  #24283b   (alt rows / elevated)
+ *   foreground      #c0caf5   (primary text)
+ *   selected        #3b4261   (selection / hover)
+ *   active          #414868   (borders / active)
+ *   urgent          #f7768e   (red)
  **/
 
 * {
-    background:     #15161EFF;
-    background-alt: #1A1B26FF;
+    background:     #1A1B26FF;
+    background-alt: #24283BFF;
     foreground:     #C0CAF5FF;
-    selected:       #33467CFF;
+    selected:       #3B4261FF;
     active:         #414868FF;
     urgent:         #F7768EFF;
 }
