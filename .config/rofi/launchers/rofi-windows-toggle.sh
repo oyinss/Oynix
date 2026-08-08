@@ -5,5 +5,5 @@
 if pgrep -x rofi > /dev/null 2>&1; then
     pkill -x rofi
 else
-    rofi -show window -theme "$HOME/.config/rofi/launchers/launcher.rasi"
+    rofi -show window -show-icons -theme "$HOME/.config/rofi/launchers/clipboard.rasi"
 fi

@@ -64,6 +64,7 @@ parse_keybindings() {
     echo ""
     echo "=== Utilities ==="
     echo "SUPER + V            → Clipboard Manager"
+    echo "SUPER + SHIFT + V    → Rofi Clipboard"
     echo "SUPER + N            → Notification center (Tide)"
     echo "SUPER + SHIFT + B    → Reload waybar"
     echo "SUPER + K            → Show keybindings"

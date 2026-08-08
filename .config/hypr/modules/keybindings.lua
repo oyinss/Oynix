@@ -125,6 +125,12 @@ hl.bind(
 )
 
 hl.bind(
+	"SUPER + SHIFT + V",
+	hl.dsp.exec_cmd("$HOME/.config/rofi/launchers/rofi-clipboard.sh"),
+	{ description = "Rofi Clipboard" }
+)
+
+hl.bind(
 	"SUPER + N",
 	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide toggleNotificationCenter"),
 	{ description = "Notification center" }

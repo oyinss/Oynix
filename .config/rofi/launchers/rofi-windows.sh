@@ -6,6 +6,21 @@ set -u
 readonly dir="${XDG_CONFIG_HOME:-$HOME/.config}/rofi/launchers"
 readonly theme="$dir/launcher.rasi"
 
+# Map a window class to a likely icon-theme name so more windows show an icon.
+# Strips org.* prefixes and common suffixes, lowercases, and provides a generic
+# fallback for classes that resolve to nothing.
+_icon_name() {
+    local c="${1:-}"
+    c="${c#org.}"
+    c="${c//\//-}"
+    c="${c%-float}"
+    c="${c%-wayland}"
+    c="${c,,}"
+    c="${c//[^a-zA-Z0-9._+-]/-}"
+    [[ -n "$c" ]] || c="application-x-executable"
+    echo "$c"
+}
+
 list_windows() {
     hyprctl clients -j 2>/dev/null \
         | jq -r '.[] | select(.mapped == true) | [.address, .title, .class, .workspace.name] | @tsv' \
@@ -13,7 +28,7 @@ list_windows() {
             [[ -n "$title" ]] || title="Untitled"
             [[ -n "$class" ]] || class="Unknown"
             printf '%s  [%s]  (%s)\0info\x1f%s\x1ficon\x1f%s\n' \
-                "$title" "$class" "$workspace" "$address" "$class"
+                "$title" "$class" "$workspace" "$address" "$(_icon_name "$class")"
         done
 }
 
@@ -53,7 +68,7 @@ show_window_menu() {
         [[ -n "$class" ]] || class="Unknown"
         addresses+=("$address")
         entries+=("$title  [$class]  ($workspace)")
-        icons+=("$class")
+        icons+=("$(_icon_name "$class")")
     done < <(
         hyprctl clients -j 2>/dev/null \
             | jq -r '.[] | select(.mapped == true) | [.address, .title, .class, .workspace.name] | @tsv'

@@ -1,0 +1,9 @@
+/**
+ * Clipboard / Window switcher theme.
+ * Import the shared launcher theme (Tokyo Night Storm) and narrow the window.
+ */
+@import "launcher.rasi"
+
+window {
+    width: 480px;
+}
