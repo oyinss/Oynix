@@ -60,7 +60,7 @@ window#waybar {
 
 #workspaces {
     border-style: solid;
-    background-color: @base;
+    background-color: shade(@base, 1.1);
     opacity: 1;
     border-radius: 10px;
     margin: 8px 0px 8px 8px;
@@ -307,8 +307,9 @@ window#waybar.empty #window {
 #custom-launcher {
     background-color: shade(@base, 1.1);
     color: @mauve;
-    border-radius: 0px 15px 0px 0px;
+    border-radius: 10px;
     padding: 5px 10px 5px 10px;
+    margin: 8px 0px 8px 8px;
 }
 
 #custom-power {
