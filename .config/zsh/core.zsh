@@ -129,6 +129,8 @@ function pathprepend() {
     done
 }
 
+pathappend "$HOME/.bun/bin"
+
 # -------------------------------------------------------
 # Yazi: cd on exit wrapper
 # -------------------------------------------------------

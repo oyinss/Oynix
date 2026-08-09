@@ -37,6 +37,9 @@ lrv() {
   local seed_label="󰹰 DB Seed"
   local seed_permissions_label="󰌾 Seed Permissions"
   local deploy_label="󰒋 Deploy"
+  local down_label="󰦞 Down (Maintenance)"
+  local down_keep_label="󰦞 Down (Keep Me In)"
+  local up_label="󰁝 Up (Reopen)"
   local clear_cache_label="󰃢 Clear Cache"
   local clear_all_label="󰃢 Clear View & Cache"
   local config_cache_label="󰒓 Config Cache"
@@ -66,6 +69,9 @@ lrv() {
     ["$seed_label"]="artisan_db_seed"
     ["$seed_permissions_label"]="artisan_db_seed_permissions"
     ["$deploy_label"]="artisan_deploy"
+    ["$down_label"]="artisan_down"
+    ["$down_keep_label"]="artisan_down_keep"
+    ["$up_label"]="artisan_up"
     ["$clear_cache_label"]="artisan_cache_clear"
     ["$clear_all_label"]="artisan_clear_all"
     ["$config_cache_label"]="artisan_config_cache"
@@ -102,6 +108,9 @@ lrv() {
     "${green}󰹰${reset} ${purple}DB Seed${reset}"
     "${orange}󰌾${reset} ${purple}Seed Permissions${reset}"
     "${green}󰒋${reset} ${purple}Deploy${reset}"
+    "${orange}󰦞${reset} ${purple}Down (Maintenance)${reset}"
+    "${green}󰦞${reset} ${purple}Down (Keep Me In)${reset}"
+    "${green}󰁝${reset} ${purple}Up (Reopen)${reset}"
     "${yellow}󰃢${reset} ${purple}Clear Cache${reset}"
     "${yellow}󰃢${reset} ${purple}Clear View & Cache${reset}"
     "${cyan}󰒓${reset} ${purple}Config Cache${reset}"
@@ -246,6 +255,17 @@ lrv() {
     artisan_exec cache:clear || return $?
     artisan_exec config:clear || return $?
   }
+  artisan_down()             { artisan_exec down; }
+  # "Keep me in" uses the maintenance bypass cookie (--with-secret).
+  # Laravel's down command has no IP whitelist flag; visit /<secret> once
+  # in your browser to receive a cookie that lets your session through.
+  artisan_down_keep() {
+    echo "Taking app DOWN in maintenance mode."
+    echo "A secret will be printed below. Visit /<secret> once in your browser"
+    echo "to get a bypass cookie so you stay logged in during maintenance."
+    artisan_exec down --with-secret
+  }
+  artisan_up()               { artisan_exec up; }
   artisan_cache_clear()      { artisan_exec cache:clear; }
   artisan_config_cache()     { artisan_exec config:cache; }
   artisan_route_cache()      { artisan_exec route:cache; }
