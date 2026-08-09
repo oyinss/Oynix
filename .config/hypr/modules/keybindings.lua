@@ -132,7 +132,7 @@ hl.bind(
 
 hl.bind(
 	"SUPER + N",
-	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide toggleNotificationCenter"),
+	hl.dsp.exec_cmd("swaync-client -t"),
 	{ description = "Notification center" }
 )
 
