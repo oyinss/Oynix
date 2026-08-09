@@ -4,15 +4,17 @@ dir="$HOME/Pictures/Screenshots"
 mkdir -p "$dir"
 name="$(date +%Y%m%d_%H%M%S).png"
 
+SATTY_OPTS=(--output-filename "$dir/$name" --actions-on-escape "save-to-clipboard,save-to-file,exit" --copy-command wl-copy)
+
 case "$1" in
     full)
-        grim "$dir/$name"
+        grim - | satty --filename - "${SATTY_OPTS[@]}"
         ;;
     region)
-        grim -g "$(slurp)" "$dir/$name"
+        grim -g "$(slurp)" - | satty --filename - "${SATTY_OPTS[@]}"
         ;;
     window)
-        grim -g "$(hyprctl activewindow -j | jq -r '.at | join(",")') $(hyprctl activewindow -j | jq -r '.size | join(",")')" "$dir/$name"
+        grim -g "$(hyprctl activewindow -j | jq -r '.at | join(",")') $(hyprctl activewindow -j | jq -r '.size | join(",")')" - | satty --filename - "${SATTY_OPTS[@]}"
         ;;
 esac
 

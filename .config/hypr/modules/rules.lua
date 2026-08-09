@@ -44,3 +44,10 @@ hl.window_rule({
 	size = "50% 60%",
 	center = true,
 })
+
+hl.window_rule({
+	name = "satty",
+	match = { class = "com.gabm.satty" },
+	float = true,
+	center = true,
+})
