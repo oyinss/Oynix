@@ -1,2 +1,9 @@
 # Editor / IDE
 .vscode/
+
+# Clipboard manager private state (favorites, thumbs, runtime)
+.local/share/hypr-clipboard-manager/favorites.sqlite
+.local/share/hypr-clipboard-manager/thumbs/
+.local/share/hypr-clipboard-manager/__pycache__/
+.local/share/hypr-clipboard-manager/watcher.*
+

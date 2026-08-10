@@ -1,0 +1,12 @@
+[Unit]
+Description=KDE Connect Shared Link Notification
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/hypr-kdeconnect-share-notify.sh
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=graphical-session.target

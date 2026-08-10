@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Optional secret-skipping filter for the clipboard watcher.
+#
+# Reads text from stdin and forwards it to `cliphist store`.
+# By default it passes everything through (normal clipboard operation is
+# never broken). Enable the conservative secret-skipping heuristics with:
+#
+#     HYPR_CLIP_FILTER_SECRETS=1 ~/.local/bin/hypr-clip-watcher
+#
+# The heuristics are deliberately narrow to avoid dropping legitimate text.
+
+data="$(cat)"
+
+if [ "${HYPR_CLIP_FILTER_SECRETS:-0}" = "1" ]; then
+    # Skip a bare 6-digit one-time code (OTP from a password manager/authenticator).
+    if printf '%s' "$data" | grep -qE '^[0-9]{6}$'; then
+        exit 0
+    fi
+    # Skip generated-looking passwords: >= 16 chars, no spaces, mixed case + digit.
+    if printf '%s' "$data" | grep -qE '^[A-Za-z0-9!@#$%^&*_\-]{16,}$' \
+        && printf '%s' "$data" | grep -qE '[a-z]' \
+        && printf '%s' "$data" | grep -qE '[A-Z]' \
+        && printf '%s' "$data" | grep -qE '[0-9]'; then
+        exit 0
+    fi
+fi
+
+printf '%s' "$data" | cliphist store

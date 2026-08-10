@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Launch the Hyprland Clipboard Manager GUI.
+exec python3 "$HOME/.local/share/hypr-clipboard-manager/app.py" "$@"
