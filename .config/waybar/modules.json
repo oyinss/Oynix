@@ -181,6 +181,13 @@
     "format": "{}",
     "on-click": "nm-connection-editor"
   },
+  "custom/bluetooth": {
+    "interval": 10,
+    "exec": "~/.config/waybar/scripts/bluetooth-battery.sh",
+    "return-type": "json",
+    "format": "{}",
+    "on-click": "bluetoothctl power toggle"
+  },
   "custom/network-down": {
     "interval": 1,
     "exec": "sh ~/.config/waybar/scripts/network-speed.sh rx",

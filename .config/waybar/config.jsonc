@@ -18,6 +18,7 @@
     "backlight",
     "custom/network-down",
     "custom/network-up",
+    "custom/bluetooth",
     "pulseaudio",
     "temperature",
     "group/hardware",

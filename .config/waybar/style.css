@@ -101,6 +101,7 @@ window#waybar {
 #custom-power,
 #custom-pacman,
 #custom-system,
+#custom-bluetooth,
 #mpd {
     padding: 5px 8px;
     border-style: solid;
@@ -273,6 +274,10 @@ window#waybar.empty #window {
     /* border-bottom: 2px solid @flamingo; */
 }
 
+#custom-bluetooth {
+    color: @sapphire;
+}
+
 #pulseaudio.muted {
     color: #3b4252;
     /* border-bottom: 2px solid #3b4252; */
@@ -432,6 +437,7 @@ window#waybar.empty #window {
 #custom-network-up.disconnected,
 #pulseaudio,
 #pulseaudio.muted,
+#custom-bluetooth,
 #custom-keyboard-layout,
 #temperature,
 #temperature.critical,
@@ -486,6 +492,12 @@ window#waybar.empty #window {
 #pulseaudio {
     border-radius: 10px;
     margin-left: 0;
+    margin-right: 5px;
+}
+
+#custom-bluetooth {
+    border-radius: 10px;
+    margin-left: 10px;
     margin-right: 5px;
 }
 
