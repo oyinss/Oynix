@@ -746,6 +746,19 @@ class ClipboardWindow(Gtk.ApplicationWindow):
             return True
         return False
 
+    def _set_pointer_cursor(self, widget):
+        """Show a pointer cursor over a widget on hover (GTK4 has no CSS
+        `cursor` property, so set the cursor programmatically)."""
+        display = Gdk.Display.get_default()
+        if display is None:
+            return
+        try:
+            cursor = Gdk.Cursor.new_from_name(display, "pointer")
+        except Exception:
+            cursor = None
+        if cursor is not None:
+            widget.set_cursor(cursor)
+
     # ----- UI construction ------------------------------------------------
 
     def _build_ui(self):
@@ -760,11 +773,13 @@ class ClipboardWindow(Gtk.ApplicationWindow):
         b_clear_history = Gtk.Button(label="Clear History")
         b_clear_history.add_css_class("clip-clear-history")
         b_clear_history.connect("clicked", self._on_clear_history)
+        self._set_pointer_cursor(b_clear_history)
         hb.pack_end(b_clear_history)
 
         b_clear_fav = Gtk.Button(label="Clear Favorites")
         b_clear_fav.add_css_class("clip-clear-fav")
         b_clear_fav.connect("clicked", self._on_clear_favorites)
+        self._set_pointer_cursor(b_clear_fav)
         self._b_clear_fav = b_clear_fav
         hb.pack_end(b_clear_fav)
 
@@ -933,6 +948,12 @@ class ClipboardWindow(Gtk.ApplicationWindow):
             remove_favorite_by_hash(entry.content_hash)
             entry.is_favorite = False
             self._fav_hashes.discard(entry.content_hash)
+            # Unfavoriting from the Favorites tab: remove just this row in place
+            # so the list doesn't jump back to the top. On the History tab we
+            # only refresh (the entry stays, only its star changes).
+            if self._current_tab == "favorites":
+                self._remove_from_fav_store(entry)
+                return
         else:
             entry.content_hash = add_favorite(entry)
             entry.is_favorite = True
@@ -943,6 +964,19 @@ class ClipboardWindow(Gtk.ApplicationWindow):
         btn.add_css_class("fav-active" if entry.is_favorite else "fav-inactive")
         self._fav_signature = None
         self.refresh_favorites()
+
+    def _remove_from_fav_store(self, entry):
+        """Remove a single entry from the favorites store in place (preserves
+        scroll position instead of rebuilding the whole list)."""
+        store = self._fav_store
+        n = store.get_n_items()
+        for i in range(n):
+            item = store.get_item(i)
+            if item is not None and item.content_hash == entry.content_hash:
+                store.remove(i)
+                break
+        self._fav_signature = None
+        self._update_status()
 
     def _on_delete_clicked(self, btn, box):
         entry = box._entry
@@ -963,12 +997,44 @@ class ClipboardWindow(Gtk.ApplicationWindow):
         )
 
     def _do_clear_history(self):
-        cliphist_wipe()
-        self._fulltext.clear()
-        self._hash_cache.clear()
-        self._thumb_cache.clear()
-        self._history_signature = None
-        self.refresh_all()
+        # "Clear history" must preserve favorited entries: favorites are the
+        # user's saved items, so we delete only the non-favorite cliphist
+        # entries instead of a blanket `cliphist wipe`. Decoding every entry to
+        # identify favorites can take a moment, so run it off the UI thread.
+        def work():
+            favs = favorite_hashes()
+            to_delete = []
+            for eid, is_image, preview in cliphist_list():
+                # Compute the hash locally (not via _ensure_hash) so we never
+                # mutate the shared UI caches from this background thread.
+                data = cliphist_decode(eid)
+                ch = _content_hash(data)
+                if ch not in favs:
+                    to_delete.append(eid)
+            if to_delete:
+                cliphist_delete(to_delete)
+            return favs
+
+        def done(favs):
+            self._fulltext.clear()
+            self._hash_cache.clear()
+            self._thumb_cache.clear()
+            self._history_signature = None
+            # Drop the cached history so the list reflects the deletion right
+            # away instead of the stale `_pending_history` re-populating it
+            # until the next background tick. Keep only favorite entries (the
+            # non-favorites were deleted above).
+            with self._lock:
+                self._pending_history = [
+                    e for e in (self._pending_history or []) if e.content_hash in favs
+                ]
+            self.refresh_all()
+
+        def run_work():
+            favs = work()
+            GLib.idle_add(done, favs)
+
+        threading.Thread(target=run_work, daemon=True).start()
 
     def _on_clear_favorites(self, btn):
         self._confirm(
@@ -981,12 +1047,16 @@ class ClipboardWindow(Gtk.ApplicationWindow):
         clear_favorites()
         self._fav_hashes.clear()
         self._fav_signature = None
+        # Clear favorite flags on the cached history rows so star icons update
+        # immediately instead of waiting for the next background pass.
+        with self._lock:
+            for e in self._pending_history or []:
+                e.is_favorite = False
         self.refresh_all()
 
     def _confirm(self, message, detail, on_confirm):
         alert = Gtk.AlertDialog(message=message, detail=detail)
         alert.set_buttons(["Cancel", "Clear"])
-        alert.set_default_response(1)
         alert.set_cancel_button(0)
         self._pending_confirm = on_confirm
         alert.choose(self, None, self._on_confirm_response)
@@ -1034,17 +1104,37 @@ class ClipboardWindow(Gtk.ApplicationWindow):
         self.refresh_history()
         self.refresh_favorites()
 
+    def _preserve_scroll(self, scroll, rebuild):
+        """Run `rebuild()` (which splices a ListView model) while restoring the
+        ScrolledWindow's vertical scroll position afterwards. Without this, any
+        store rebuild (e.g. unfavoriting, or the periodic background refresh)
+        snaps the list back to the top."""
+        adj = scroll.get_vadjustment() if scroll else None
+        old = adj.get_value() if adj else 0.0
+        rebuild()
+        if adj is not None:
+            def _restore(*_a):
+                adj.set_value(min(old, adj.get_upper() - adj.get_page_size()))
+                return False
+            GLib.idle_add(_restore)
+
     def refresh_history(self):
         with self._lock:
             query = self._query
         entries = self._pending_history or []
         filtered = [e for e in entries if self._matches(e, query)]
-        sig = (tuple((e.id, e.preview, e.is_favorite) for e in filtered[:HISTORY_MAX]), query)
+        # NOTE: `is_favorite` is intentionally left out of the signature. Favoriting
+        # updates the star in-place via _on_fav_clicked/_row_bind, so including it
+        # here would force a full history rebuild (and a scroll jump) on every
+        # favorite toggle.
+        sig = (tuple((e.id, e.preview) for e in filtered[:HISTORY_MAX]), query)
         if sig == self._history_signature:
             return
         self._history_signature = sig
-        self._history_store.splice(0, self._history_store.get_n_items(), filtered[:HISTORY_MAX])
-        self._update_status()
+        self._preserve_scroll(self._history_scroll, lambda: (
+            self._history_store.splice(0, self._history_store.get_n_items(), filtered[:HISTORY_MAX]),
+            self._update_status(),
+        ))
 
     def refresh_favorites(self):
         with self._lock:
@@ -1055,8 +1145,10 @@ class ClipboardWindow(Gtk.ApplicationWindow):
         if sig == self._fav_signature:
             return
         self._fav_signature = sig
-        self._fav_store.splice(0, self._fav_store.get_n_items(), filtered)
-        self._update_status()
+        self._preserve_scroll(self._fav_scroll, lambda: (
+            self._fav_store.splice(0, self._fav_store.get_n_items(), filtered),
+            self._update_status(),
+        ))
 
     def _update_status(self):
         if self._status is None:
