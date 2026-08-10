@@ -4,21 +4,67 @@
 set -u
 
 readonly dir="${XDG_CONFIG_HOME:-$HOME/.config}/rofi/launchers"
-readonly theme="$dir/launcher.rasi"
+readonly theme="$dir/clipboard.rasi"
 
-# Map a window class to a likely icon-theme name so more windows show an icon.
-# Strips org.* prefixes and common suffixes, lowercases, and provides a generic
-# fallback for classes that resolve to nothing.
+# Icon-theme search roots. Includes the active GTK icon theme plus every
+# other installed theme (and hicolor), so an icon is found even when the
+# active theme lacks it but a sibling theme provides it. Used to verify that a
+# candidate icon actually exists before reporting it.
+_icon_roots() {
+    local root theme
+    for root in "$HOME/.local/share/icons" "$HOME/.icons" /usr/share/icons /usr/share/pixmaps; do
+        if [[ -d "$root" ]]; then
+            for theme in "$root"/*/; do
+                [[ -f "$theme/index.theme" ]] && echo "${theme%/}"
+            done
+        fi
+    done
+    echo /usr/share/icons/hicolor
+}
+
+# Explicit class -> icon-name mappings for apps whose window class does not
+# match any installed icon name. Verified against the search roots below.
+_icon_map() {
+    case "${1:-}" in
+        brave-browser) echo "brave-desktop" ;;
+        brave)         echo "brave-desktop" ;;
+        codium)        echo "vscodium" ;;
+        Enpass|enpass) echo "enpass" ;;
+        *) return 1 ;;
+    esac
+}
+
+# Map a window class to an icon-theme name so more windows show an icon.
+# Resolution order: explicit mapping, exact class (rofi/GTK resolve org.* apps
+# like org.gnome.Nautilus / org.kde.dolphin via hicolor), a normalized
+# lowercased form, a canonical file-manager icon, then a generic fallback.
+# Each candidate is verified to actually exist in the search roots.
 _icon_name() {
-    local c="${1:-}"
-    c="${c#org.}"
+    local c="${1:-}" norm candidate mapped exists
     c="${c//\//-}"
     c="${c%-float}"
     c="${c%-wayland}"
-    c="${c,,}"
-    c="${c//[^a-zA-Z0-9._+-]/-}"
     [[ -n "$c" ]] || c="application-x-executable"
-    echo "$c"
+
+    norm="${c,,}"
+    norm="${norm//[^a-zA-Z0-9._+-]/-}"
+
+    for candidate in "$(_icon_map "$c")" "$c" "$norm"; do
+        [[ -n "$candidate" ]] || continue
+        exists=$(for root in $(_icon_roots); do
+            [[ -d "$root" ]] && find "$root" -iname "${candidate}.*" -print -quit 2>/dev/null
+        done | head -n 1)
+        if [[ -n "$exists" ]]; then
+            echo "$candidate"
+            return
+        fi
+    done
+
+    case "${norm}" in
+        *nautilus*|*dolphin*|*filemanager*|*file-manager*|*explorer*) echo "system-file-manager"; return ;;
+    esac
+
+    echo "application-x-executable"
 }
 
 list_windows() {
