@@ -208,3 +208,7 @@ function random_bars() {
     done
     echo
 }
+
+# Add to ~/.zshrc to ignore history for commands containing secrets:
+setopt HIST_IGNORE_SPACE
+export HISTIGNORE='sudo -S *'
