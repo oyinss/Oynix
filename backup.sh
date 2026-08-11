@@ -78,11 +78,6 @@ cat << "EOF"
 EOF
 
 # ───────────────────────────────────────────────────────────────
-# Ensure backup directory exists
-# ───────────────────────────────────────────────────────────────
-sudo mkdir -p "$BACKUP_DIR"
-
-# ───────────────────────────────────────────────────────────────
 # Build exclude arguments
 # ───────────────────────────────────────────────────────────────
 EXCLUDE_ARGS=()
@@ -91,26 +86,41 @@ for pattern in "${EXCLUDES[@]}"; do
 done
 
 # ───────────────────────────────────────────────────────────────
-# Backup personal home dirs
+# Collect every directory to back up
 # ───────────────────────────────────────────────────────────────
+dirs=()
 for dir in "${HOME_DIRS[@]}"; do
   if [[ -e "$dir" ]]; then
-    echo "[+] Backing up $dir"
-    sudo rsync "${RSYNC_FLAGS[@]}" "${EXCLUDE_ARGS[@]}" "$dir" "$BACKUP_DIR"
+    dirs+=("$dir")
   else
     echo "[·] Skipping missing $dir"
   fi
 done
+for dir in "${SYSTEM_DIRS[@]}"; do
+  [[ -e "$dir" ]] && dirs+=("$dir")
+done
+
+if (( ${#dirs[@]} == 0 )); then
+  echo "[✘] No directories to back up."
+  exit 1
+fi
 
 # ───────────────────────────────────────────────────────────────
-# Backup system dirs
+# Run the whole backup under a single pkexec (one password prompt)
 # ───────────────────────────────────────────────────────────────
-for dir in "${SYSTEM_DIRS[@]}"; do
-  if [[ -e "$dir" ]]; then
+printf -v rsync_args '%q ' "${RSYNC_FLAGS[@]}" "${EXCLUDE_ARGS[@]}"
+pkexec bash -c '
+  set -e
+  BACKUP_DIR=$1
+  shift
+  rsync_args=$1
+  shift
+  mkdir -p "$BACKUP_DIR"
+  for dir in "$@"; do
     echo "[+] Backing up $dir"
-    sudo rsync "${RSYNC_FLAGS[@]}" "${EXCLUDE_ARGS[@]}" "$dir" "$BACKUP_DIR"
-  fi
-done
+    eval "rsync $rsync_args \"$dir\" \"$BACKUP_DIR\""
+  done
+' _ "$BACKUP_DIR" "$rsync_args" "${dirs[@]}"
 
 # ───────────────────────────────────────────────────────────────
 # Footer
