@@ -1210,9 +1210,10 @@ class ClipboardWindow(Gtk.ApplicationWindow):
 
 
 class ClipboardApp(Gtk.Application):
-    def __init__(self):
+    def __init__(self, daemon=False):
         super().__init__(application_id=APP_ID)
         self._window = None
+        self._daemon = daemon
 
     def do_activate(self):
         win = self._window
@@ -1224,7 +1225,11 @@ class ClipboardApp(Gtk.Application):
             return
         win = ClipboardWindow(self)
         self._window = win
-        win.present()
+        # In daemon mode (started at login) keep the window hidden so the
+        # first SUPER+SHIFT+V toggles it open instantly via single-instance
+        # activation, exactly like swaync.
+        if not self._daemon:
+            win.present()
 
 
 def main():
@@ -1233,7 +1238,10 @@ def main():
             print(f"hypr-clipboard-manager: required command not found: {binary}",
                   file=sys.stderr)
             return 1
-    app = ClipboardApp()
+    # --daemon: start hidden and keep running so later invocations activate
+    # the live instance instantly (single-instance D-Bus activation).
+    daemon = "--daemon" in sys.argv[1:]
+    app = ClipboardApp(daemon=daemon)
     return app.run(None)
 
 
