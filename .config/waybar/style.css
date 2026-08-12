@@ -278,6 +278,10 @@ window#waybar.empty #window {
     color: @sapphire;
 }
 
+#custom-bluetooth.bluetooth-low {
+    color: @red;
+}
+
 #pulseaudio.muted {
     color: #3b4252;
     /* border-bottom: 2px solid #3b4252; */
