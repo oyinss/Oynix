@@ -725,6 +725,7 @@ class ClipboardWindow(Gtk.ApplicationWindow):
             Gtk.CallbackAction.new(self._on_escape_action),
         )
         shortcut_ctrl = Gtk.ShortcutController()
+        shortcut_ctrl.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         shortcut_ctrl.add_shortcut(esc_shortcut)
         self.add_controller(shortcut_ctrl)
 
@@ -1222,6 +1223,7 @@ class ClipboardApp(Gtk.Application):
                 win.set_visible(False)  # toggle closed
             else:
                 win.present()  # toggle open
+                win.grab_focus()
             return
         win = ClipboardWindow(self)
         self._window = win
@@ -1230,6 +1232,7 @@ class ClipboardApp(Gtk.Application):
         # activation, exactly like swaync.
         if not self._daemon:
             win.present()
+            win.grab_focus()
 
 
 def main():
