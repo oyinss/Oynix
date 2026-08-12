@@ -20,6 +20,8 @@
   border: 1px solid @surface0;
   border-radius: 10px;
   padding: 10px;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .notification-window {
@@ -39,17 +41,17 @@
 .summary {
   color: @text;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .body {
   color: @subtext;
-  font-size: 15px;
+  font-size: 12px;
 }
 
 .time {
   color: @overlay;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .close-button {
@@ -82,7 +84,7 @@
 /* Title */
 .title {
   color: @text;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: bold;
   padding: 10px;
 }
@@ -94,7 +96,7 @@
   border: none;
   border-radius: 8px;
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .clear-all:hover {
@@ -112,7 +114,7 @@
 
 .dnd-widget label {
   color: @text;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .dnd-widget switch {
