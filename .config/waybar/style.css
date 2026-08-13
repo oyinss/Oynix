@@ -23,7 +23,7 @@
     color: @lavender;
     border: 0;
     padding: 0 0;
-    font-family: "Fira Sans Semibold", "Font Awesome 6 Free", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Fira Sans Semibold", "CaskaydiaCove Nerd Font", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
     transition: all 0.5s ease;
 }
 
@@ -302,6 +302,9 @@ window#waybar.empty #window {
     background-color: #ebcb8b;
     color: @base;
     border-radius: 10px;
+    min-width: 30px;
+    padding: 5px 10px;
+    margin: 8px 5px;
 }
 
 #tray {
