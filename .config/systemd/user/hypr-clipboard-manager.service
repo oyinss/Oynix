@@ -1,0 +1,12 @@
+[Unit]
+Description=Hyprland Clipboard Manager GUI (persistent daemon)
+
+[Service]
+Type=dbus
+BusName=org.hypr.ClipboardManager
+ExecStart=%h/.local/bin/hypr-clipboard-manager --daemon
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

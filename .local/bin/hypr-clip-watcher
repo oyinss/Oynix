@@ -19,6 +19,15 @@ if ! flock -n 9; then
 fi
 echo "$$" > "$DATA_DIR/watcher.pid"
 
+# Wait for the Wayland socket (Hyprland) to exist before starting the
+# watchers. The unit is started by default.target at login, which can be
+# before the compositor is up; without this wait wl-paste would fail and the
+# service would flap until Hyprland appears.
+export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
+while [[ ! -S "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" ]]; do
+    sleep 1
+done
+
 # Keep clipboard data alive after the copying application closes.
 if command -v wl-clip-persist >/dev/null 2>&1; then
     wl-clip-persist --clipboard regular --all-mime-type-regex '.*' &
@@ -27,6 +36,14 @@ fi
 # Store text and image history. cliphist itself de-duplicates identical entries.
 # Text goes through the optional secret-skipping filter (pass-through by default).
 wl-paste --type text --watch "$HOME/.local/bin/hypr-clip-filter" &
+text_pid=$!
 wl-paste --type image --watch cliphist store &
+image_pid=$!
 
-wait
+# Exit when either wl-paste watcher dies (Wayland disconnect on Hyprland
+# restart). Exit non-zero so systemd's Restart=always restarts us. We track
+# the wl-paste PIDs explicitly rather than a bare `wait`, which would also
+# block on wl-clip-persist and never exit.
+wait -n "$text_pid" "$image_pid"
+kill "$text_pid" "$image_pid" 2>/dev/null
+exit 1

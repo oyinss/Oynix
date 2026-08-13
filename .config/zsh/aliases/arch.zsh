@@ -8,6 +8,10 @@ alias deploy="paru -S"
 # Remove a package (quick)
 alias purge="paru -R"
 
+# Passwordless pacman via NOPASSWD sudoers rule (10-oyins-pacman)
+alias pacman="sudo pacman"
+alias pacman-upgrade="sudo pacman -Syu"
+
 
 # ----------------------------
 # INTERACTIVE UPDATE MENU
