@@ -5,9 +5,10 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Autostart/
 
 hl.on("hyprland.start", function()
-	hl.exec_cmd("/usr/lib/hyprpolkitagent")
+	hl.exec_once("/usr/lib/hyprpolkitagent/hyprpolkitagent")
 	hl.exec_cmd("swaybg -i $HOME/Pictures/Wallpaper/wallpaper-008.jpg -m fill")
-	hl.exec_cmd("waybar > /dev/null 2>&1")
+	-- waybar is disabled for now; tide-island (dynamic island) is the default bar.
+	-- Re-enable by uncommenting: hl.exec_cmd("waybar > /dev/null 2>&1")
 	-- swaync is a systemd user unit (swaync.service) with Restart=on-failure,
 	-- so it starts at login and auto-recovers without relying on exec-once.
 	hl.exec_cmd("systemctl --user start swaync.service 2>/dev/null")

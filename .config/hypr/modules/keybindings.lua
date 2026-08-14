@@ -38,8 +38,6 @@ hl.bind(main_mod .. " + SHIFT + H", hl.dsp.layout("swapcol l"), { description = 
 hl.bind(main_mod .. " + SHIFT + L", hl.dsp.layout("swapcol r"), { description = "Swap scrolling column right" })
 
 -- Move the scrolling viewport without changing focus.
-hl.bind(main_mod .. " + comma", hl.dsp.layout("move -col"), { description = "Scroll viewport left" })
-hl.bind(main_mod .. " + period", hl.dsp.layout("move +col"), { description = "Scroll viewport right" })
 
 -- Cycle the current column through the configured width presets.
 hl.bind(main_mod .. " + bracketleft", hl.dsp.layout("colresize -conf"), { description = "Previous column width" })
@@ -158,12 +156,12 @@ hl.bind(
 	{ description = "Workspace overview" }
 )
 hl.bind(
-	"SUPER + Right",
+	"SUPER + period",
 	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide swipeRight"),
 	{ description = "Tide swipe right" }
 )
 hl.bind(
-	"SUPER + Left",
+	"SUPER + comma",
 	hl.dsp.exec_cmd("/usr/bin/quickshell ipc --any-display -p /usr/share/tide-island call tide showCustom"),
 	{ description = "Tide custom page" }
 )
