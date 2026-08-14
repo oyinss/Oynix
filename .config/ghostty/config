@@ -1,8 +1,12 @@
 theme = tokyonight_night
 
+# Middle-click pastes the system clipboard (not just primary selection),
+# so text copied with Ctrl+Shift+C / Ctrl+C can be pasted with middle click.
+copy-on-select = clipboard
+
 font-family = "Hack Nerd Font"
 
-font-size = 10
+font-size = 8
 
 window-padding-x = 10
 window-padding-y = 5
