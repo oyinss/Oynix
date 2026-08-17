@@ -19,12 +19,19 @@ if ! flock -n 9; then
 fi
 echo "$$" > "$DATA_DIR/watcher.pid"
 
-# Wait for the Wayland socket (Hyprland) to exist before starting the
-# watchers. The unit is started by default.target at login, which can be
-# before the compositor is up; without this wait wl-paste would fail and the
-# service would flap until Hyprland appears.
-export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
-while [[ ! -S "${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" ]]; do
+# The user service starts before Hyprland and therefore does not initially
+# inherit WAYLAND_DISPLAY. Read it from systemd after Hyprland imports the
+# session environment instead of assuming the socket is always wayland-0.
+while true; do
+    manager_display="$(systemctl --user show-environment 2>/dev/null \
+        | grep -m1 '^WAYLAND_DISPLAY=' \
+        | cut -d= -f2-)"
+
+    if [[ -n "$manager_display" && -S "${XDG_RUNTIME_DIR}/${manager_display}" ]]; then
+        export WAYLAND_DISPLAY="$manager_display"
+        break
+    fi
+
     sleep 1
 done
 

@@ -12,6 +12,24 @@ APP="$(readlink -f "$0" || echo "$0")"
 
 # --daemon is only used by the systemd unit: start hidden and keep running.
 if [[ "${1:-}" == "--daemon" ]]; then
+    export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+    # default.target can start this unit before Hyprland. Wait until Hyprland
+    # has exported its real Wayland socket (which is not always wayland-0), so
+    # GTK never tries to initialize without a display after login.
+    while true; do
+        manager_display="$(systemctl --user show-environment 2>/dev/null \
+            | grep -m1 '^WAYLAND_DISPLAY=' \
+            | cut -d= -f2-)"
+
+        if [[ -n "$manager_display" && -S "${XDG_RUNTIME_DIR}/${manager_display}" ]]; then
+            export WAYLAND_DISPLAY="$manager_display"
+            break
+        fi
+
+        sleep 1
+    done
+
     exec python3 "$HOME/.local/share/hypr-clipboard-manager/app.py" --daemon
 fi
 

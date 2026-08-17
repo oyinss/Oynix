@@ -8,13 +8,13 @@ local programs = require("modules.programs")
 local main_mod = "SUPER"
 
 hl.bind(main_mod .. " + C", hl.dsp.window.close())
-hl.bind(main_mod .. " + Q", hl.dsp.exec_cmd(programs.terminal))
+hl.bind(main_mod .. " + Q", hl.dsp.window.close())
 hl.bind(
 	main_mod .. " + M",
 	hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'")
 )
 hl.bind(main_mod .. " + E", hl.dsp.exec_cmd(programs.file_manager))
-hl.bind(main_mod .. " + T", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(main_mod .. " + T", hl.dsp.exec_cmd(programs.terminal))
 hl.bind(main_mod .. " + F", hl.dsp.window.fullscreen({ action = "toggle", mode = "fullscreen" }))
 hl.bind(main_mod .. " + A", hl.dsp.exec_cmd(programs.application_menu))
 hl.bind(main_mod .. " + W", hl.dsp.exec_cmd(programs.window_menu))

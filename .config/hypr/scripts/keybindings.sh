@@ -5,11 +5,11 @@ KEYBINDINGS_FILE="$HOME/.config/hypr/modules/keybindings.lua"
 # Parse keybindings and format for rofi
 parse_keybindings() {
     echo "=== General ==="
-    echo "SUPER + Q            → Terminal (kitty)"
+    echo "SUPER + Q            → Close window"
     echo "SUPER + C            → Close window"
     echo "SUPER + M            → Logout/Shutdown"
     echo "SUPER + E            → File manager (dolphin)"
-    echo "SUPER + T            → Toggle float"
+    echo "SUPER + T            → Terminal (kitty)"
     echo "SUPER + F            → Toggle fullscreen"
     echo "SUPER + A            → Application menu"
     echo "SUPER + W            → Window menu"
