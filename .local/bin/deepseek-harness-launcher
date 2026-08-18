@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Launch the DeepSeek Harness web UI.
+#
+# The `dsh` CLI serves a browser UI (the only GUI profile; `tui` does not
+# ship in this build). This wrapper starts the server detached if it is not
+# already running, waits for it to come up, then opens the browser.
+set -u
+
+PORT=3080
+URL="http://127.0.0.1:${PORT}"
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dsh"
+LOG="$LOG_DIR/web.log"
+PIDFILE="$LOG_DIR/web.pid"
+
+# Server already up? Just open the browser.
+if curl -fsS -o /dev/null --max-time 2 "$URL" 2>/dev/null; then
+    xdg-open "$URL" >/dev/null 2>&1 &
+    exit 0
+fi
+
+# Start the server detached.
+mkdir -p "$LOG_DIR"
+nohup dsh web >"$LOG" 2>&1 &
+echo "$!" > "$PIDFILE"
+
+# Wait up to ~15s for it to listen, then open the browser.
+ready=0
+for _ in $(seq 1 30); do
+    if curl -fsS -o /dev/null --max-time 1 "$URL" 2>/dev/null; then
+        ready=1
+        break
+    fi
+    sleep 0.5
+done
+
+if [ "$ready" = 1 ]; then
+    xdg-open "$URL" >/dev/null 2>&1 &
+else
+    notify-send -a "DeepSeek Harness" "Failed to start" "See $LOG" 2>/dev/null || true
+    exit 1
+fi

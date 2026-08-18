@@ -117,6 +117,12 @@ hl.bind(
 )
 
 hl.bind(
+	"SUPER + Print",
+	hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh region-satty"),
+	{ description = "Screenshot region with annotation" }
+)
+
+hl.bind(
 	"SUPER + V",
 	hl.dsp.exec_cmd("$HOME/.local/bin/hypr-clipboard-manager"),
 	{ description = "Clipboard Manager" }
