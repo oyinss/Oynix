@@ -13,3 +13,6 @@ require("modules.input")
 require("modules.keybindings")
 require("modules.rules")
 require("modules.hyprbars")
+
+-- HyprMod managed settings
+require("hyprland-gui")

@@ -13,7 +13,7 @@
     "hyprland/submap",
     "custom/cava-internal"
   ],
-  "modules-center": ["clock", "custom/playerctl-prev", "custom/playerctl-play", "custom/playerctl-next"],
+  "modules-center": [],
   "modules-right": [
     "backlight",
     "custom/network-down",
