@@ -34,12 +34,6 @@
     "on-click": "playerctl next",
     "tooltip": false
   },
-  "custom/swap": {
-    "on-click": "~/.config/waybar/scripts/swap.sh",
-    "format": "󰃘",
-    "tooltip": true,
-    "tooltip-format": "Swap between waybar Themes"
-  },
   "custom/mpd": {
     "format": " {title} - {artist}",
     "interval": 5,

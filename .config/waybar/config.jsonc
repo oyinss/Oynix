@@ -8,12 +8,13 @@
   "modules-left": [
     "custom/launcher",
     "hyprland/workspaces",
-    "custom/swap",
     "tray",
     "hyprland/submap",
     "custom/cava-internal"
   ],
-  "modules-center": [],
+  "modules-center": [
+    "clock"
+  ],
   "modules-right": [
     "backlight",
     "custom/network-down",
