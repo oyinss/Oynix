@@ -151,6 +151,11 @@ hl.bind(
 	hl.dsp.exec_cmd("~/.config/hypr/scripts/keybindings.sh"),
 	{ description = "Show keybindings" }
 )
+hl.bind(
+	"SUPER + SHIFT + T",
+	hl.dsp.exec_cmd("~/.config/hypr/scripts/touchpad-disable.sh 10"),
+	{ description = "Disable touchpad for 10s" }
+)
 
 ---------------------
 ---- TIDE ISLAND ----
