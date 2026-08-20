@@ -31,24 +31,24 @@ hl.monitor({
 })
 
 -- Apply the correct state when Hyprland starts or this config is reloaded.
+-- Note: do NOT reload on hot-plug (see handlers below) — reloading can race
+-- with monitor re-enumeration and transiently leave the laptop panel enabled.
 if hl.get_monitor(external_output) ~= nil then
 	disable_internal_display()
 else
 	enable_internal_display()
 end
 
--- Enter external-only mode when HDMI is connected.
+-- Enter external-only mode the moment HDMI is connected.
 hl.on("monitor.added", function(monitor)
 	if monitor ~= nil and monitor.name == external_output then
-		-- Reload so the initial-state check above installs one definitive rule
-		-- for the laptop panel instead of stacking conflicting monitor rules.
-		hl.exec_cmd("hyprctl reload")
+		disable_internal_display()
 	end
 end)
 
--- Restore normal laptop mode as soon as HDMI is disconnected.
+-- Restore normal laptop mode the moment HDMI is disconnected.
 hl.on("monitor.removed", function(monitor)
 	if monitor ~= nil and monitor.name == external_output then
-		hl.exec_cmd("hyprctl reload")
+		enable_internal_display()
 	end
 end)

@@ -129,6 +129,7 @@ function pathprepend() {
     done
 }
 
+pathprepend "$HOME/.local/bin"
 pathappend "$HOME/.bun/bin"
 
 # -------------------------------------------------------
