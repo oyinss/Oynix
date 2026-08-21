@@ -3,7 +3,7 @@
 conf() {
   # Define an associative array with emoji-labeled configuration file commands
   declare -A configs=(
-    ["⚙️  Edit Auto-CPUFreq Config"]="nvim ~/dotfiles/etc/auto-cpufreq.conf"
+    ["⚙️  Edit Auto-CPUFreq Config"]="nvim ~/Oynix/etc/auto-cpufreq.conf"
     ["🖥 Edit Alacritty Config"]="nvim ~/.config/alacritty/alacritty.yml"
     ["🐱 Edit Kitty Config"]="nvim ~/.config/kitty/kitty.conf"
     ["🧩 Edit GRUB Config"]="sudo nvim /etc/default/grub"

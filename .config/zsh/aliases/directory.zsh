@@ -5,14 +5,14 @@ dir() {
   declare -A directories=(
     ["🗂 Config"]="cd ~/.config"
     ["📝 Neovim Config"]="cd ~/.config/nvim"
-    ["📁 Dotfiles"]="cd ~/dotfiles"
+    ["📁 Dotfiles"]="cd ~/Oynix"
     ["🧩 Hub"]="cd ~/Hub"
     ["🐱 Kitty Config"]="cd ~/.config/kitty/"
     ["📦 Pacman Cache (PKG)"]="cd /var/cache/pacman/pkg"
     ["🎨 Alacritty Config"]="cd ~/.config/alacritty/"
     ["🖼 Pictures"]="cd ~/Pictures"
-    ["📜 Aliases"]="cd ~/dotfiles/zsh/aliases"
-    ["💻 Zsh"]="cd ~/dotfiles/zsh"
+    ["📜 Aliases"]="cd ~/Oynix/.config/zsh/aliases"
+    ["💻 Zsh"]="cd ~/Oynix/.config/zsh"
   )
 
   # Use fzf to display the directory options

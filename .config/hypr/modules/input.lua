@@ -26,6 +26,12 @@ hl.gesture({
 	action = "workspace",
 })
 
+-- Built-in Synaptics touchpad disabled entirely (palm interference while typing).
+hl.device({
+	name = "cust0001:00-06cb:cdaa-touchpad",
+	enabled = false,
+})
+
 -- Example per-device configuration.
 -- See https://wiki.hypr.land/Configuring/Advanced-and-Cool/Devices/
 hl.device({

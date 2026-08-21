@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # File location: ~/Oynix/backup.sh
@@ -10,28 +9,33 @@ IFS=$'\n\t'
 # Config
 # ───────────────────────────────────────────────────────────────
 BACKUP_DIR="/backup"
+
+# Home of the owner of this script — resolves correctly even when
+# systemd runs it as root (where $HOME would be /root).
+USER_HOME="$(getent passwd "$(stat -c '%U' "$0")" | cut -d: -f6)"
+
 RSYNC_FLAGS=(-aAXv)
 
-# Directories under $HOME to back up. Only things you can NOT
+# Directories under the home dir to back up. Only things you can NOT
 # re-download from a server go here: personal files, code, dotfiles,
 # browser profiles (bookmarks/passwords), email, keys, phone photos.
 HOME_DIRS=(
-  "$HOME/Documents"
-  "$HOME/Pictures"
-  "$HOME/DCIM"
-  "$HOME/Music"
-  "$HOME/Videos"
-  "$HOME/Recordings"
-  "$HOME/Android"
-  "$HOME/Apex"
-  "$HOME/Oynix"
-  "$HOME/.ssh"
-  "$HOME/.shell.env"
-  "$HOME/.gnupg"
-  "$HOME/.password-store"
-  "$HOME/.thunderbird"
-  "$HOME/.config/BraveSoftware"   # bookmarks, passwords, history
-  "$HOME/.local/share/kwalletd"   # KDE wallet
+  "$USER_HOME/Documents"
+  "$USER_HOME/Pictures"
+  "$USER_HOME/DCIM"
+  "$USER_HOME/Music"
+  "$USER_HOME/Videos"
+  "$USER_HOME/Recordings"
+  "$USER_HOME/Android"
+  "$USER_HOME/Apex"
+  "$USER_HOME/Oynix"
+  "$USER_HOME/.ssh"
+  "$USER_HOME/.shell.env"
+  "$USER_HOME/.gnupg"
+  "$USER_HOME/.password-store"
+  "$USER_HOME/.thunderbird"
+  "$USER_HOME/.config/BraveSoftware"   # bookmarks, passwords, history
+  "$USER_HOME/.local/share/kwalletd"   # KDE wallet
 )
 
 # System dirs that can't be re-downloaded (configs, cron jobs)
@@ -106,10 +110,12 @@ if (( ${#dirs[@]} == 0 )); then
 fi
 
 # ───────────────────────────────────────────────────────────────
-# Run the whole backup under a single pkexec (one password prompt)
+# Run the whole backup under a single pkexec (one password prompt).
+# Already root (e.g. systemd timer) → run directly, no pkexec.
 # ───────────────────────────────────────────────────────────────
 printf -v rsync_args '%q ' "${RSYNC_FLAGS[@]}" "${EXCLUDE_ARGS[@]}"
-pkexec bash -c '
+
+INNER='
   set -e
   BACKUP_DIR=$1
   shift
@@ -120,7 +126,13 @@ pkexec bash -c '
     echo "[+] Backing up $dir"
     eval "rsync $rsync_args \"$dir\" \"$BACKUP_DIR\""
   done
-' _ "$BACKUP_DIR" "$rsync_args" "${dirs[@]}"
+'
+
+if [[ $(id -u) -eq 0 ]]; then
+  bash -c "$INNER" _ "$BACKUP_DIR" "$rsync_args" "${dirs[@]}"
+else
+  pkexec bash -c "$INNER" _ "$BACKUP_DIR" "$rsync_args" "${dirs[@]}"
+fi
 
 # ───────────────────────────────────────────────────────────────
 # Footer
