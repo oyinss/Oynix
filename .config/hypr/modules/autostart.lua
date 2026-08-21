@@ -5,7 +5,9 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Autostart/
 
 hl.on("hyprland.start", function()
-	hl.exec_once("/usr/lib/hyprpolkitagent/hyprpolkitagent")
+	-- Run the packaged user service so privileged GUI apps launched from Rofi
+	-- (for example Timeshift) always have a Polkit authentication agent.
+	hl.exec_cmd("systemctl --user start hyprpolkitagent.service")
 	hl.exec_cmd("swaybg -i $HOME/Pictures/Wallpaper/wallpaper-008.jpg -m fill")
 	-- Tide Island stays centered while Waybar supplies the side modules.
 	hl.exec_cmd("waybar > /dev/null 2>&1")
