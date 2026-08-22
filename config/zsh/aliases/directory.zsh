@@ -11,8 +11,8 @@ dir() {
     ["📦 Pacman Cache (PKG)"]="cd /var/cache/pacman/pkg"
     ["🎨 Alacritty Config"]="cd ~/.config/alacritty/"
     ["🖼 Pictures"]="cd ~/Pictures"
-    ["📜 Aliases"]="cd ~/Oynix/.config/zsh/aliases"
-    ["💻 Zsh"]="cd ~/Oynix/.config/zsh"
+    ["📜 Aliases"]="cd ~/Oynix/config/zsh/aliases"
+    ["💻 Zsh"]="cd ~/Oynix/config/zsh"
   )
 
   # Use fzf to display the directory options
@@ -25,4 +25,3 @@ dir() {
     echo "❌ Invalid option. Please choose a valid directory."
   fi
 }
-
