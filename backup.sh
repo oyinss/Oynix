@@ -110,28 +110,26 @@ if (( ${#dirs[@]} == 0 )); then
 fi
 
 # ───────────────────────────────────────────────────────────────
-# Run the whole backup under a single pkexec (one password prompt).
-# Already root (e.g. systemd timer) → run directly, no pkexec.
+# Copy everything. Runs as root: called directly by systemd/timer,
+# or reached via self-elevation below.
 # ───────────────────────────────────────────────────────────────
-printf -v rsync_args '%q ' "${RSYNC_FLAGS[@]}" "${EXCLUDE_ARGS[@]}"
-
-INNER='
-  set -e
-  BACKUP_DIR=$1
-  shift
-  rsync_args=$1
-  shift
+run_backup() {
   mkdir -p "$BACKUP_DIR"
-  for dir in "$@"; do
+  local dir
+  for dir in "${dirs[@]}"; do
     echo "[+] Backing up $dir"
-    eval "rsync $rsync_args \"$dir\" \"$BACKUP_DIR\""
+    rsync "${RSYNC_FLAGS[@]}" "${EXCLUDE_ARGS[@]}" "$dir" "$BACKUP_DIR"
   done
-'
+}
 
+# ───────────────────────────────────────────────────────────────
+# Elevate by re-executing this same script under sudo — allowed
+# passwordlessly via sudoers rule 10-oyins-backup.
+# ───────────────────────────────────────────────────────────────
 if [[ $(id -u) -eq 0 ]]; then
-  bash -c "$INNER" _ "$BACKUP_DIR" "$rsync_args" "${dirs[@]}"
+  run_backup
 else
-  pkexec bash -c "$INNER" _ "$BACKUP_DIR" "$rsync_args" "${dirs[@]}"
+  exec sudo "$(readlink -f "$0")"
 fi
 
 # ───────────────────────────────────────────────────────────────
