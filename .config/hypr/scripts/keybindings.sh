@@ -56,7 +56,7 @@ parse_keybindings() {
     echo " 󰒭               → Next track"
     echo ""
     echo "=== Screenshots ==="
-    echo "SHIFT + Print        → Full screen screenshot"
+    echo "SUPER + SHIFT + S    → Full screen screenshot"
     echo "Print                → Region screenshot"
     echo "CTRL + Print         → Active window screenshot"
     echo "SUPER + Print        → Region screenshot (annotate)"
