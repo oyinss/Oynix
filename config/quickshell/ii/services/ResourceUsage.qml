@@ -24,6 +24,7 @@ Singleton {
     property real networkDownSpeed: 0 // B/s
     property real networkUpSpeed: 0 // B/s
     property var previousNetStats
+    property string networkInterface: "" // default-route interface
 
     property string maxAvailableMemoryString: kbToGbString(ResourceUsage.memoryTotal)
     property string maxAvailableSwapString: kbToGbString(ResourceUsage.swapTotal)
@@ -46,6 +47,20 @@ Singleton {
         if (bytesPerSec >= 1000)
             return Math.round(bytesPerSec / 1000) + " KB/s";
         return Math.round(bytesPerSec) + " B/s";
+    }
+
+    function defaultRouteInterface(routeText) {
+        let bestIface = ""
+        let bestMetric = Number.MAX_SAFE_INTEGER
+        for (const line of routeText.split("\n").slice(1)) {
+            const fields = line.trim().split(/\s+/)
+            if (fields.length < 8 || fields[1] !== "00000000") continue
+            const metric = Number(fields[6])
+            if (!Number.isFinite(metric) || metric >= bestMetric) continue
+            bestMetric = metric
+            bestIface = fields[0]
+        }
+        return bestIface
     }
 
     function updateMemoryUsageHistory() {
@@ -81,6 +96,7 @@ Singleton {
             fileMeminfo.reload()
             fileStat.reload()
             fileNetdev.reload()
+            fileRoute.reload()
 
             // Parse memory and swap usage
             const textMeminfo = fileMeminfo.text()
@@ -106,25 +122,34 @@ Singleton {
                 previousCpuStats = { total, idle }
             }
 
-            // Parse network speeds from /proc/net/dev
+            // Parse network speeds from /proc/net/dev for the default-route interface
+            const textRoute = fileRoute.text()
+            networkInterface = defaultRouteInterface(textRoute)
+
             const textNet = fileNetdev.text()
+            const nowMs = Date.now()
             let rxTotal = 0
             let txTotal = 0
-            for (const line of textNet.split("\n").slice(2)) {
-                const [iface, data] = line.split(":")
-                if (!data) continue
-                const trimmed = iface.trim()
-                if (trimmed === "lo" || trimmed.endsWith("ifb")) continue
-                const fields = data.trim().split(/\s+/)
-                rxTotal += Number(fields[0] ?? 0)
-                txTotal += Number(fields[8] ?? 0)
+            if (networkInterface !== "") {
+                for (const line of textNet.split("\n").slice(2)) {
+                    const [iface, data] = line.split(":")
+                    if (!data) continue
+                    if (iface.trim() !== networkInterface) continue
+                    const fields = data.trim().split(/\s+/)
+                    rxTotal += Number(fields[0] ?? 0)
+                    txTotal += Number(fields[8] ?? 0)
+                }
             }
-            if (previousNetStats) {
-                const elapsed = interval / 1000
+            if (previousNetStats && networkInterface === previousNetStats.iface) {
+                const elapsed = Math.max(1, nowMs - previousNetStats.timestamp) / 1000
                 networkDownSpeed = Math.max(0, (rxTotal - previousNetStats.rx) / elapsed)
                 networkUpSpeed = Math.max(0, (txTotal - previousNetStats.tx) / elapsed)
+            } else {
+                // First tick or interface changed: no comparable counters yet
+                networkDownSpeed = 0
+                networkUpSpeed = 0
             }
-            previousNetStats = { rx: rxTotal, tx: txTotal }
+            previousNetStats = { timestamp: nowMs, iface: networkInterface, rx: rxTotal, tx: txTotal }
 
             root.updateHistories()
             interval = Config.options?.resources?.updateInterval ?? 3000
@@ -134,6 +159,7 @@ Singleton {
 	FileView { id: fileMeminfo; path: "/proc/meminfo" }
 	FileView { id: fileStat; path: "/proc/stat" }
 	FileView { id: fileNetdev; path: "/proc/net/dev" }
+	FileView { id: fileRoute; path: "/proc/net/route" }
 
     Process {
         id: findCpuMaxFreqProc
