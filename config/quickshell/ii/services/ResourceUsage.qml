@@ -21,8 +21,8 @@ Singleton {
     property real swapUsedPercentage: swapTotal > 0 ? (swapUsed / swapTotal) : 0
     property real cpuUsage: 0
     property var previousCpuStats
-    property real networkDownSpeed: 0 // KB/s
-    property real networkUpSpeed: 0 // KB/s
+    property real networkDownSpeed: 0 // B/s
+    property real networkUpSpeed: 0 // B/s
     property var previousNetStats
 
     property string maxAvailableMemoryString: kbToGbString(ResourceUsage.memoryTotal)
@@ -38,12 +38,14 @@ Singleton {
         return (kb / (1024 * 1024)).toFixed(1) + " GB";
     }
 
-    function formatSpeed(kbPerSec) {
-        if (kbPerSec >= 1024 * 1024)
-            return (kbPerSec / (1024 * 1024)).toFixed(1) + " GB/s";
-        if (kbPerSec >= 1024)
-            return (kbPerSec / 1024).toFixed(1) + " MB/s";
-        return Math.round(kbPerSec) + " KB/s";
+    function formatSpeed(bytesPerSec) {
+        if (bytesPerSec >= 1000000000)
+            return (bytesPerSec / 1000000000).toFixed(1) + " GB/s";
+        if (bytesPerSec >= 1000000)
+            return (bytesPerSec / 1000000).toFixed(1) + " MB/s";
+        if (bytesPerSec >= 1000)
+            return Math.round(bytesPerSec / 1000) + " KB/s";
+        return Math.round(bytesPerSec) + " B/s";
     }
 
     function updateMemoryUsageHistory() {
