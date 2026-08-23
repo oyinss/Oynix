@@ -6,7 +6,6 @@ KEYBINDINGS_FILE="$HOME/.config/hypr/modules/keybindings.lua"
 parse_keybindings() {
     echo "=== General ==="
     echo "SUPER + Q            → Close window"
-    echo "SUPER + C            → Close window"
     echo "SUPER + M            → Logout/Shutdown"
     echo "SUPER + E            → File manager (dolphin)"
     echo "SUPER + T            → Terminal (kitty)"
