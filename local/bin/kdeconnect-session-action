@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -u
+
+action="${1:-}"
+
+case "$action" in
+    lock)
+        exec /usr/bin/loginctl lock-session
+        ;;
+    unlock)
+        exec /usr/bin/loginctl unlock-session
+        ;;
+    suspend)
+        exec /usr/bin/bash -c '/usr/bin/systemctl suspend || /usr/bin/loginctl suspend'
+        ;;
+    hibernate)
+        exec /usr/bin/bash -c '/usr/bin/systemctl hibernate || /usr/bin/loginctl hibernate'
+        ;;
+    logout)
+        exec /usr/bin/pkill -i Hyprland
+        ;;
+    shutdown)
+        exec /usr/bin/bash -c '/usr/bin/systemctl poweroff || /usr/bin/loginctl poweroff'
+        ;;
+    reboot)
+        exec /usr/bin/bash -c '/usr/bin/reboot || /usr/bin/loginctl reboot'
+        ;;
+    firmware)
+        exec /usr/bin/bash -c '/usr/bin/systemctl reboot --firmware-setup || /usr/bin/loginctl reboot --firmware-setup'
+        ;;
+    task-manager)
+        if [[ -x /usr/bin/plasma-systemmonitor ]]; then
+            exec /usr/bin/plasma-systemmonitor --page-name Processes
+        elif [[ -x /usr/bin/btop ]]; then
+            exec /usr/bin/btop
+        elif [[ -x /usr/bin/htop ]]; then
+            exec /usr/bin/htop
+        else
+            exit 127
+        fi
+        ;;
+    *)
+        printf 'Usage: %s {lock|unlock|suspend|hibernate|logout|shutdown|reboot|firmware|task-manager}\n' "$0" >&2
+        exit 2
+        ;;
+esac
