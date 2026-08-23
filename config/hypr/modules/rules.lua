@@ -38,14 +38,6 @@ hl.window_rule({
 })
 
 hl.window_rule({
-	name = "clipboard-manager",
-	match = { class = "org.hypr.ClipboardManager" },
-	float = true,
-	size = "50% 60%",
-	center = true,
-})
-
-hl.window_rule({
 	name = "satty",
 	match = { class = "com.gabm.satty" },
 	float = true,
