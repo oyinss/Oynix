@@ -24,7 +24,7 @@ lsp() {
   local sel
   sel=$(
     {
-      # windowed apps (what you see in waybar)
+      # windowed apps (what you see in the bar)
       if command -v wmctrl &>/dev/null; then
         wmctrl -l -p 2>/dev/null | awk '{
           pid=$3
