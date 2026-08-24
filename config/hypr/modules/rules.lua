@@ -32,12 +32,6 @@ hl.window_rule({
 })
 
 hl.window_rule({
-	name = "float-terminal",
-	match = { class = "ghostty" },
-	workspace = "special:magic",
-})
-
-hl.window_rule({
 	name = "satty",
 	match = { class = "com.gabm.satty" },
 	float = true,
