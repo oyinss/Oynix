@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Re-applies the notify-send --expire-time quoting fix to
+# /usr/share/endeavouros/scripts/eos-script-lib-yad.
+#
+# Upstream bug (package: eos-bash-shared): the eos_notification() helper
+# builds its notify-send command with
+#
+#     cmd+=(--expire-time="'$expiretime'")
+#
+# i.e. the millisecond value is wrapped in LITERAL single quotes, so
+# notify-send aborts with
+#
+#     Cannot parse integer value “'10000'” for --expire-time
+#
+# and every EndeavourOS "updates available" / post-update reboot-recommendation
+# notification silently fails to appear.
+#
+# This script rewrites the value to --expire-time="$expiretime".
+#
+# Idempotent: a second run (or an upstream release that fixes the line)
+# leaves the file untouched and exits 0. Runs as root from the pacman hook
+# /etc/pacman.d/hooks/eos-bash-shared-expire-time.hook whenever
+# eos-bash-shared is installed or upgraded; manual runs are harmless.
+
+set -euo pipefail
+
+target=/usr/share/endeavouros/scripts/eos-script-lib-yad
+
+[[ -r $target ]] || { echo "eos-script-lib-fix: $target not found, skipping" >&2; exit 0; }
+
+sum_before="$(md5sum "$target")"
+
+sed -i 's/--expire-time="'"'"'\$expiretime'"'"'"/--expire-time="\$expiretime"/' "$target"
+
+if [[ "$(md5sum "$target")" != "$sum_before" ]]; then
+    echo "eos-script-lib-fix: patched expire-time quoting in $target"
+else
+    echo "eos-script-lib-fix: nothing to patch in $target"
+fi

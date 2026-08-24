@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = eos-bash-shared
+
+[Action]
+Description = Re-applying eos-script-lib-yad expire-time quoting fix
+When = PostTransaction
+Exec = /usr/local/bin/eos-script-lib-fix
