@@ -13,6 +13,9 @@ local function enable_internal_display()
 		mode = "preferred",
 		position = "0x0",
 		scale = 1,
+		-- Must be explicit: omitted fields are merged into the existing rule,
+		-- so a previously applied `disabled = true` would otherwise persist.
+		disabled = false,
 	})
 end
 
