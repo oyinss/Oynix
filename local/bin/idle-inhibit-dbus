@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+# D-Bus ScreenSaver inhibit holder for the quickshell ii "Keep system awake"
+# toggle.
+#
+# Holds an org.freedesktop.ScreenSaver Inhibit for as long as this process
+# lives. hypridle owns that bus name and pauses its idle listeners while any
+# inhibit is held, so this suppresses idle locking even when the Wayland
+# idle-inhibit protocol path fails.
+#
+# Started/stopped by config/quickshell/ii/services/Idle.qml (Process.running).
+# On SIGTERM the inhibit is released cleanly; if the process is killed hard,
+# the D-Bus daemon drops the inhibit automatically when the connection dies.
+
+import signal
+
+import gi
+
+gi.require_version("GLib", "2.0")
+from gi.repository import Gio, GLib
+
+bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+cookie = bus.call_sync(
+    "org.freedesktop.ScreenSaver",
+    "/org/freedesktop/ScreenSaver",
+    "org.freedesktop.ScreenSaver",
+    "Inhibit",
+    GLib.Variant("(ss)", ("quickshell-ii", "Keep system awake")),
+    GLib.VariantType("(u)"),
+    Gio.DBusCallFlags.NONE,
+    -1,
+    None,
+)[0]
+
+loop = GLib.MainLoop()
+
+
+def release_and_quit(*_args):
+    try:
+        bus.call_sync(
+            "org.freedesktop.ScreenSaver",
+            "/org/freedesktop/ScreenSaver",
+            "org.freedesktop.ScreenSaver",
+            "UnInhibit",
+            GLib.Variant("(u)", (cookie,)),
+            None,
+            Gio.DBusCallFlags.NONE,
+            -1,
+            None,
+        )
+    except GLib.Error:
+        pass
+    loop.quit()
+
+
+signal.signal(signal.SIGTERM, release_and_quit)
+signal.signal(signal.SIGINT, release_and_quit)
+loop.run()
