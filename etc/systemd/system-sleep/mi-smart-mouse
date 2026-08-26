@@ -1,0 +1,23 @@
+#!/bin/sh
+# Reconnect the trusted Mi Smart Mouse after suspend/resume.
+# BlueZ can restore the adapter before the mouse starts advertising again, so
+# retry rather than relying on one immediate connection attempt.
+
+[ "${1:-}" = post ] || exit 0
+[ "${2:-}" = suspend ] || exit 0
+
+name="Mi Smart Mouse"
+
+sleep 2
+address="$(/usr/bin/bluetoothctl devices 2>/dev/null \
+    | /usr/bin/awk -v name="$name" '$0 ~ name "$" {print $2; exit}')"
+[ -n "$address" ] || exit 0
+
+for _ in 1 2 3 4 5; do
+    if timeout 5 /usr/bin/bluetoothctl connect "$address" >/dev/null 2>&1; then
+        exit 0
+    fi
+    sleep 3
+done
+
+exit 0
