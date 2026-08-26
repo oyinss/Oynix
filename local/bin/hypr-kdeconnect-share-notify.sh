@@ -89,18 +89,36 @@ send_notify() {
     fi
 }
 
+copy_image_to_clipboard() {
+    local path="$1" mime="$2" unit
+    unit="kdeconnect-image-clipboard-$(date +%s%N)"
+
+    if command -v magick >/dev/null 2>&1; then
+        systemd-run --user --quiet --collect --unit="$unit" \
+            bash -c 'magick "$1" png:- 2>/dev/null | wl-copy --foreground --type image/png' _ "$path"
+    else
+        systemd-run --user --quiet --collect --unit="$unit" \
+            bash -c 'wl-copy --foreground --type "$1" < "$2"' _ "$mime" "$path"
+    fi
+}
+
 notify_file() {
-    local url="$1" path name icon mime action
+    local url="$1" path icon mime action summary
     # QUrl::toString() keeps paths mostly decoded; unquote any leftover %XX.
     path="$(python3 -c 'import sys, urllib.parse; print(urllib.parse.unquote(sys.argv[1], errors="replace"))' \
         "${url#file://}" 2>/dev/null || printf '%s' "${url#file://}")"
-    name="$(basename -- "$path")"
-
     # Images get a real thumbnail as the notification image.
     icon="$NOTIF_ICON"
+    summary="$FILE_SUMMARY"
     mime="$(file -b --mime-type -- "$path" 2>/dev/null)"
     case "$mime" in
-        image/*) [ -f "$path" ] && icon="$path" ;;
+        image/*)
+            if [ -f "$path" ]; then
+                icon="$path"
+                summary="Image received and copied"
+                copy_image_to_clipboard "$path" "$mime"
+            fi
+            ;;
     esac
 
     # Body is the full path so the panel's built-in copy button copies
@@ -108,7 +126,7 @@ notify_file() {
     # one makes notify-send return early with the chosen key.
     action="$(notify-send -a "$NOTIF_APP_NAME" -i "$icon" -t 8000 \
         -A "copyPath=Copy path" -A "open=Open" \
-        -- "$FILE_SUMMARY" "$path" 2>/dev/null)"
+        -- "$summary" "$path" 2>/dev/null)"
 
     case "$action" in
         copyPath)
