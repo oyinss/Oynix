@@ -29,7 +29,7 @@ PanelWindow {
 
     // Modes
     // TODO: Ask: sidebar AI
-    enum SnipAction { Copy, Edit, Search, CharRecognition, Record, RecordWithSound } 
+    enum SnipAction { Copy, SaveAndCopy, Edit, Search, CharRecognition, Record, RecordWithSound } 
     enum SelectionMode { RectCorners, Circle }
     enum Phase { Select, Post }
     property var action: RegionSelection.SnipAction.Copy
@@ -240,6 +240,8 @@ PanelWindow {
         switch(root.action) {
             case RegionSelection.SnipAction.Copy:
                 return ScreenshotAction.Action.Copy;
+            case RegionSelection.SnipAction.SaveAndCopy:
+                return ScreenshotAction.Action.SaveAndCopy;
             case RegionSelection.SnipAction.Edit:
                 return ScreenshotAction.Action.Edit;
             case RegionSelection.SnipAction.Search:

@@ -15,6 +15,7 @@ Singleton {
 
     enum Action {
         Copy,
+        SaveAndCopy,
         Edit,
         Search,
         CharRecognition,
@@ -57,6 +58,20 @@ Singleton {
                     ${cleanup}`
                 ]
 
+                break;
+            case ScreenshotAction.Action.SaveAndCopy:
+                // Save the region to ~/Pictures/Screenshots and also copy it.
+                // The dir is resolved at exec time (double-quoted so the
+                // $(xdg-user-dir ...) substitution expands in bash).
+                return [
+                    "bash", "-c",
+                    `screenshotsDir="$(xdg-user-dir PICTURES 2>/dev/null || printf '%s' "$HOME/Pictures")/Screenshots" && \
+                    mkdir -p "$screenshotsDir" && \
+                    saveFileName="Screenshot_$(date '+%Y-%m-%d_%H.%M.%S').png" && \
+                    savePath="$screenshotsDir/$saveFileName" && \
+                    ${cropToStdout} | tee >(wl-copy) > "$savePath" && \
+                    ${cleanup}`
+                ]
                 break;
             case ScreenshotAction.Action.Edit:
                 return ["bash", "-c", `${cropToStdout} | ${annotationCommand} && ${cleanup}`]
