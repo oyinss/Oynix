@@ -213,3 +213,4 @@ function random_bars() {
 # Add to ~/.zshrc to ignore history for commands containing secrets:
 setopt HIST_IGNORE_SPACE
 export HISTIGNORE='sudo -S *'
+export CUA_DRIVER_RS_ENABLE_WAYLAND=1
