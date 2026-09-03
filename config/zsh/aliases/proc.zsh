@@ -46,12 +46,13 @@ lsp() {
         }' 2>/dev/null
       fi
 
-      # non-windowed processes (skip kernel threads, dedup by comm)
+      # non-windowed processes (skip kernel threads, dedup only by PID)
       ps -eo pid,comm,%cpu,%mem --sort=-%mem 2>/dev/null \
         | awk '{
           if ($2 ~ /^\[/) next
           if ($1+0 == 0) next
-          if (seen[$2]++) next
+          # Keep separate instances such as multiple Codex app servers visible.
+          if (seen[$1]++) next
           printf "%s\t  %s\t%s cpu  %s mem\n", $1, $2, $3, $4
         }'
     } | command fzf \
@@ -96,15 +97,36 @@ lsp() {
   unique_pids=($(print -l -- "${all_pids[@]}" | sort -rn -u))
   [[ ${#unique_pids} -eq 0 ]] && return
 
+  # Some apps (including Codex Desktop) keep a supervisor alive and respawn
+  # selected children. Include each selected process group, except this shell's
+  # group, so killing a leaf also stops its supervisor without killing Zsh.
+  local shell_pgid
+  shell_pgid=$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')
+  local -a process_groups
+  for pid in "${pids[@]}"; do
+    local pgid
+    pgid=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
+    if [[ "$pgid" =~ '^[0-9]+$' && "$pgid" != "$shell_pgid" && "$pgid" -gt 1 ]]; then
+      process_groups+=($pgid)
+    fi
+  done
+  process_groups=($(print -l -- "${process_groups[@]}" | sort -n -u))
+
   print -r -- ""
   print -r -- "  ${red}  Killing ${#unique_pids} process(es): ${yellow}${(j:, :)pids[1]}${reset}"
   print -r -- ""
 
+  for pgid in "${process_groups[@]}"; do
+    /bin/kill -TERM -- "-$pgid" 2>/dev/null
+  done
   for pid in "${unique_pids[@]}"; do
     kill -TERM "$pid" 2>/dev/null
   done
   sleep 0.5
 
+  for pgid in "${process_groups[@]}"; do
+    /bin/kill -KILL -- "-$pgid" 2>/dev/null
+  done
   for pid in "${unique_pids[@]}"; do
     kill -0 "$pid" 2>/dev/null && kill -KILL "$pid" 2>/dev/null
   done
