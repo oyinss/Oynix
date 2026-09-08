@@ -1,0 +1,96 @@
+matches:
+  # ---------------------------------------------------
+
+  # ---------------------------------------------------
+
+  - trigger: ";cry"
+    replace: "crypto.oyn@outlook.com"
+
+  - trigger: ";msn"
+    replace: "onyinbra@msn.com"
+
+  - trigger: ";ens"
+    replace: "oyinbra.eth"
+
+  - trigger: ";fn"
+    replace: "ONYINBRAKEME"
+
+  - trigger: ";ln"
+    replace: "OGBE"
+
+  - trigger: ";mn"
+    replace: "KELVIN"
+
+  - trigger: ";bra"
+    replace: "0xe755a999cf9f36a2c932acc320ab089a0c68ed76"
+
+  - trigger: ";bra"
+    replace: "🇧🇷 BRA ➲  ED76"
+
+  - trigger: ";arg"
+    replace: "0xc00c30f9bcb7123979ffa603a28712f7411258fe"
+
+  - trigger: ";arg"
+    replace: "🇦🇷 ARG ➲ 58FE"
+
+  - trigger: ";brbu"
+    replace: "🇧🇧 BRB ➭ 2230"
+
+  - trigger: ";bhru"
+    replace: "🇧🇭 BHR ➭ C884"
+
+  - trigger: ";atg"
+    replace: "🇦🇬 ATG ➭ 8DF9"
+
+  - trigger: ";argu"
+    replace: "🇦🇷 ARG ➭ 58FE"
+
+  - trigger: ";zena"
+    replace: "2265733004"
+
+  - trigger: ";badore"
+    replace: "101245"
+
+  - trigger: ";ca"
+    replace: "3, Ishola Adewale Close, Salvation Estate, Scheme 2, Owode Bus-Stop, Owode/Langbasa, Ajah, Lagos."
+
+  - trigger: ";gma"
+    replace: "onyinbra@gmail.com"
+
+  - trigger: ";apt"
+    replace: "0x70b765f7eb2e20c72cdd05794007d4fe8037d0d70b6f369b4a49ac87d6064308"
+  - trigger: ";sol"
+    replace: "DBkBTYWf1uY4qWoGEnK36cmQXt2xZQDAmpvNEDTfgaiV"
+  - trigger: ";sui"
+    replace: "0x66d1eb156269e56e07458af6892d2150cac5560ea29fc0dfbfe4cf7671608205"
+
+  - trigger: ";3w"
+    replace: "044dba2ae2b7dd0fafd4b300bfa08e84"
+
+  - trigger: ";atg"
+    replace: "0xe6e10f0a5b3fedd981af0bc9aba2372b5f7b8df9"
+
+  - trigger: ";afg"
+    replace: "0x0ca3dc41292676197bc0b07cd516e607bb815ebc"
+
+  - trigger: ";blz"
+    replace: "0x7d2d421500f3c50317d0b6e06604b2145ba125b1"
+  - trigger: ";brb"
+    replace: "0xca1f7c15b04096fdc0a92d4c547918f18a832230"
+
+  - trigger: ";pm"
+    replace: "onyinbrakeme.ogbe@pisol.ng"
+
+  - trigger: ";pp"
+    replace: "Ng+8030961949"
+
+  - trigger: ";ngn"
+    replace: "₦"
+
+  - trigger: ";l0"
+    replace: "http://localhost:8000/"
+  - trigger: ";l1"
+    replace: "http://localhost:8001/"
+
+  - trigger: ";bvn"
+    replace: "22256957354"

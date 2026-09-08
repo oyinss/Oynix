@@ -1,0 +1,153 @@
+matches:
+  - trigger: "dont"
+    replace: "don't"
+
+  - trigger: "Dont"
+    replace: "Don't"
+
+  - trigger: "wont"
+    replace: "won't"
+
+  - trigger: "Wont"
+    replace: "Won't"
+
+  - trigger: "cant"
+    replace: "can't"
+
+  - trigger: "Cant"
+    replace: "Can't"
+
+  - trigger: "didnt"
+    replace: "didn't"
+
+  - trigger: "Didnt"
+    replace: "Didn't"
+
+  - trigger: "isnt"
+    replace: "isn't"
+
+  - trigger: "Isnt"
+    replace: "Isn't"
+
+  - trigger: "arent"
+    replace: "aren't"
+
+  - trigger: "Arent"
+    replace: "Aren't"
+
+  - trigger: "havent"
+    replace: "haven't"
+
+  - trigger: "Havent"
+    replace: "Haven't"
+
+  - trigger: "hasnt"
+    replace: "hasn't"
+
+  - trigger: "Hasnt"
+    replace: "Hasn't"
+
+  - trigger: "hadnt"
+    replace: "hadn't"
+
+  - trigger: "Hadnt"
+    replace: "Hadn't"
+
+  - trigger: "theres"
+    replace: "there's"
+
+  - trigger: "Theres"
+    replace: "There's"
+
+  - trigger: "whats"
+    replace: "what's"
+
+  - trigger: "Whats"
+    replace: "What's"
+
+  - trigger: "whos"
+    replace: "who's"
+
+  - trigger: "Whos"
+    replace: "Who's"
+
+  - trigger: "youll"
+    replace: "you'll"
+
+  - trigger: "Youll"
+    replace: "You'll"
+
+  - trigger: "youve"
+    replace: "you've"
+
+  - trigger: "Youve"
+    replace: "You've"
+
+  - trigger: "itll"
+    replace: "it'll"
+
+  - trigger: "Itll"
+    replace: "It'll"
+
+  - trigger: "theyll"
+    replace: "they'll"
+
+  - trigger: "Theyll"
+    replace: "They'll"
+
+  - trigger: "weve"
+    replace: "we've"
+
+  - trigger: "Weve"
+    replace: "We've"
+
+  - trigger: "theyve"
+    replace: "they've"
+
+  - trigger: "Theyve"
+    replace: "They've"
+
+  - trigger: "idve"
+    replace: "I'd've"
+
+  - trigger: "Idve"
+    replace: "I'd've"
+
+  - trigger: "hedve"
+    replace: "he'd've"
+
+  - trigger: "Hedve"
+    replace: "He'd've"
+
+  - trigger: "youdve"
+    replace: "you'd've"
+
+  - trigger: "Youdve"
+    replace: "You'd've"
+
+  - trigger: "wouldve"
+    replace: "would've"
+
+  - trigger: "Wouldve"
+    replace: "Would've"
+
+  - trigger: "couldve"
+    replace: "could've"
+
+  - trigger: "Couldve"
+    replace: "Could've"
+
+  - trigger: "mightve"
+    replace: "might've"
+
+  - trigger: "Mightve"
+    replace: "Might've"
+
+  - trigger: "mustve"
+    replace: "must've"
+
+  - trigger: "Mustve"
+    replace: "Must've"
+
+  - trigger: ";fa"
+    replace: "Font Awesome Icon"

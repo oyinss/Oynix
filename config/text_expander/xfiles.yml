@@ -1,0 +1,24 @@
+matches:
+  - trigger: ";since"
+    replace: "{{output}}"
+    vars:
+      - name: output
+        type: shell
+        params:
+          cmd: "~/.config/espanso/scripts/since_date.sh"
+
+  - trigger: "@ano"
+    replace: "@anoma"
+
+  - trigger: "@inf"
+    replace: "@Infinit_Labs"
+
+  - trigger: "@0"
+    replace: "@0yinss"
+
+  - trigger: ";ff"
+    replace: "filter:follows"
+
+  - trigger: "xqano"
+    replace: >
+      min_replies:2 filter:follows (@anoma OR "Anoma") filter:blue_verified -filter:nativeretweets -filter:retweets -filter:replies (lang:en OR lang:zh OR lang:cn)
