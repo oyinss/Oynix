@@ -1,0 +1,42 @@
+# ---------------------------------------------------
+# 📦 UTILITY OR UI/EMOJI REPLACEMENTS
+# -----------------------------------------------------
+
+matches:
+  - trigger: ";blo"
+    replace: "📦"
+  - trigger: ";gc"
+    replace: "🟢 "
+  - trigger: ";pla"
+    replace: "▶️"
+  - trigger: ";tic"
+    replace: "✔"
+  - trigger: ";Mir"
+    replace: "🌌"
+  - trigger: ";aird"
+    replace: "🐠"
+  - trigger: ";w2"
+    replace: "🌐"
+  - trigger: ";w3"
+    replace: "🕸"
+  - trigger: ";wc"
+    replace: "⚪ "
+  - trigger: ";yc"
+    replace: "🟡 "
+  - trigger: ";ys"
+    replace: "¥"
+  - trigger: ";LOL"
+    replace: "😂"
+
+
+  - trigger: ";lmao"
+    replace: "🤣"
+
+  - trigger: ";lol"
+    replace: "😂"
+
+  - trigger: ";code"
+    replace: "👨🏾‍💻"
+
+  - trigger: ";rc"
+    replace: "🔴 "

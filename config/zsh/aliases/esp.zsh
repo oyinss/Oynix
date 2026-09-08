@@ -1,23 +1,20 @@
 #!/bin/zsh
 
-espanso.() {
+exp.() {
   typeset -A commands=(
-    ["📶 Check Espanso Status"]="espanso status"
-    ["🚀 Start Espanso"]="espanso start"
-    ["🛑 Stop Espanso"]="espanso stop"
-    ["🔄 Restart Espanso"]="espanso restart"
-    ["💀 Kill Espanso"]="pkill -9 espanso"
-    ["📜 View Logs"]="espanso log"
-    ["⚙️ Edit Config (nvim)"]="nvim ~/.config/espanso/config/default.yml"
-    ["🧩 Edit Matches"]="edit_match"
-    ["📦 Edit Packages"]="nvim ~/.config/espanso/match/packages"
-    ["🔧 Doctor (Debug)"]="espanso doctor"
-    ["🔁 Reload Config"]="espanso restart"
-    ["➕ Add New Trigger"]="add"
+    ["📶 Check text_expander Status"]="systemctl status text_expander --no-pager"
+    ["🚀 Start text_expander"]="sudo systemctl start text_expander"
+    ["🛑 Stop text_expander"]="sudo systemctl stop text_expander"
+    ["🔄 Restart text_expander"]="sudo systemctl restart text_expander"
+    ["📜 View Logs"]="journalctl -u text_expander --no-pager -n 100"
+    ["🧩 List Triggers"]="/usr/local/bin/text_expander --list-triggers"
+    ["⚙️ Edit Base Config (nvim)"]="nvim ~/.config/text_expander/base.yml"
+    ["📝 Edit Matches"]="edit_match"
+    ["➕ Add New Trigger"]="add_trigger"
     ["🚪 Quit"]="return"
   )
 
-  local choice=$(printf "%s\n" "${(@k)commands}" | fzf --height=14 --prompt="🧠  Espanso Menu: " --border)
+  local choice=$(printf "%s\n" "${(@k)commands}" | fzf --height=12 --prompt="🧠  text_expander Menu: " --border)
 
   if [[ -n $choice ]]; then
     eval "${commands[$choice]}"
@@ -26,9 +23,9 @@ espanso.() {
   fi
 }
 
-add() {
-  local match_dir="$HOME/.config/espanso/match"
-  local target=$(find "$match_dir" -type f -name '*.yml' | fzf --prompt="📄 Select target YAML: " --height=10)
+add_trigger() {
+  local match_dir="$HOME/.config/text_expander"
+  local target=$(find "$match_dir" -maxdepth 1 -type f -name '*.yml' | fzf --prompt="📄 Select target YAML: " --height=10)
   local tmpfile=$(mktemp)
 
   if [[ -z "$target" ]]; then
@@ -45,7 +42,7 @@ add() {
     read trigger
     [[ -z "$trigger" ]] && break
 
-    echo -n "💬 Enter Replacment: "
+    echo -n "💬 Enter Replacement: "
     read replace
 
     if [[ -z "$replace" ]]; then
@@ -53,7 +50,6 @@ add() {
       continue
     fi
 
-    # echo >> "$tmpfile"
     echo "  - trigger: \"$trigger\"" >> "$tmpfile"
     echo "    replace: \"$replace\"" >> "$tmpfile"
     echo "✅ Buffered trigger \"$trigger\""
@@ -63,7 +59,7 @@ add() {
     echo >> "$target"
     cat "$tmpfile" >> "$target"
     echo "📦 All triggers appended to $target"
-    echo "🔁 Run 'espanso restart' manually when ready."
+    echo "🔁 Run 'sudo systemctl restart text_expander' when ready."
   else
     echo "⚠️ No triggers were added."
   fi
@@ -72,8 +68,8 @@ add() {
 }
 
 edit_match() {
-  local match_dir="$HOME/.config/espanso/match"
-  local target=$(find "$match_dir" -type f -name '*.yml' | fzf --prompt="📝 Select YAML to edit: " --height=10)
+  local match_dir="$HOME/.config/text_expander"
+  local target=$(find "$match_dir" -maxdepth 1 -type f -name '*.yml' | fzf --prompt="📝 Select YAML to edit: " --height=10)
 
   if [[ -z "$target" ]]; then
     echo "❌ No file selected."
@@ -82,4 +78,3 @@ edit_match() {
 
   nvim "$target"
 }
-
