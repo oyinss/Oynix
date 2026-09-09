@@ -180,7 +180,10 @@ ApplicationWindow {
                     Layout.fillHeight: false
                     programs: ["kded6"]
                     description: Translation.tr("Conflicts with the shell's system tray implementation")
-                    onAlwaysSelected: Config.options.conflictKiller.autoKillTrays = true
+                    onAlwaysSelected: {
+                        Config.options.conflictKiller.autoKillTrays = true
+                        Config.blockWrites = false
+                    }
                 }
 
                 ConflictingProgramGroup {

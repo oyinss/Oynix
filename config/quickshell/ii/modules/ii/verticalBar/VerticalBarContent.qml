@@ -92,6 +92,13 @@ Item { // Bar content region
                 Layout.fillWidth: true
                 Layout.fillHeight: false
             }
+
+            Bar.CodexUsageIndicator {
+                vertical: true
+                visible: CodexUsage.available
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+            }
             
             HorizontalBarSeparator {}
 
