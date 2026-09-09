@@ -16,25 +16,14 @@ Singleton {
     property string weeklyResetDescription: ""
     property string lastError: ""
 
-    readonly property int displayPercent: weeklyUsedPercent >= 0
-        ? weeklyUsedPercent
-        : sparkWeeklyUsedPercent
+    readonly property int displayPercent: weeklyUsedPercent
     readonly property bool warning: displayPercent >= 80
     readonly property string displayText: displayPercent >= 0
         ? `${displayPercent}%`
         : "--"
-    readonly property string tooltipText: {
-        if (!root.available)
-            return "Codex usage unavailable"
-
-        const weekly = root.weeklyUsedPercent >= 0 ? `${root.weeklyUsedPercent}%` : "--"
-        const fiveHour = root.fiveHourUsedPercent >= 0 ? `${root.fiveHourUsedPercent}%` : "--"
-        const sparkWeekly = root.sparkWeeklyUsedPercent >= 0 ? `${root.sparkWeeklyUsedPercent}%` : "--"
-        const reset = root.weeklyResetDescription.length > 0
-            ? `\nWeekly reset: ${root.weeklyResetDescription}`
-            : ""
-        return `Codex usage\nWeekly: ${weekly}\n5-hour: ${fiveHour}\nSpark weekly: ${sparkWeekly}${reset}`
-    }
+    readonly property string tooltipText: root.available
+        ? `Codex weekly usage: ${root.displayText}`
+        : "Codex weekly usage unavailable"
 
     function refresh() {
         if (usageProcess.running)

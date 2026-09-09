@@ -12,13 +12,19 @@ Singleton {
     property string killDialogQmlPath: FileUtils.trimFileProtocol(Quickshell.shellPath("killDialog.qml"))
 
     function load() {
-        // dummy to force init
+        // Quickshell owns the tray, so persist the equivalent of choosing
+        // "Always" for kded6 in the conflict dialog.
+        if (Config.options.conflictKiller.autoKillTrays !== true)
+            Config.setNestedValue("conflictKiller.autoKillTrays", true)
     }
 
     Connections {
         target: Config
         function onReadyChanged() {
-            if (Config.ready) checkConflictsProc.running = true
+            if (Config.ready) {
+                root.load()
+                checkConflictsProc.running = true
+            }
         }
     }
 
