@@ -5,7 +5,7 @@
 matches:
   - trigger: ";blo"
     replace: "📦"
-  - trigger: ";gc"
+  - triggers: [";gc", ":gc"]
     replace: "🟢 "
   - trigger: ";pla"
     replace: "▶️"
