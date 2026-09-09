@@ -118,6 +118,11 @@ Item { // Bar content region
                 Layout.fillWidth: root.useShortenedForm === 2
             }
 
+            CodexUsageIndicator {
+                Layout.alignment: Qt.AlignVCenter
+                visible: CodexUsage.available
+            }
+
             Media {
                 visible: root.useShortenedForm < 2
                 Layout.fillWidth: true
