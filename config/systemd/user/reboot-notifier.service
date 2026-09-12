@@ -1,0 +1,9 @@
+[Unit]
+Description=Check whether a reboot is needed (kernel or reboot-required flag)
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/reboot-notifier.sh
+
+[Install]
+WantedBy=reboot-notifier.timer

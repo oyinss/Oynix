@@ -1,0 +1,12 @@
+[Unit]
+Description=Run reboot check periodically and after each boot
+
+[Timer]
+# Check promptly after any update instead of only once a day, so a newly
+# installed kernel is reported within minutes of the upgrade.
+OnCalendar=*:0/15
+OnBootSec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
