@@ -25,21 +25,29 @@ is_newer() { # is_newer <installed> <running>  (e.g. "7.1.8.arch1" "7.1.8-arch1-
 }
 
 reboot_needed() {
-    [[ -f /var/run/reboot-required ]] && return 0
+    [[ -f /var/run/reboot-required ]] && { echo "flag|||"; return 0; }
     local running installed pkg
     running="$(uname -r)"
     for pkg in $(pacman -Qq 2>/dev/null | grep -E '^(linux|linux-lts|linux-zen|linux-hardened)$'); do
         installed="$(pacman -Q "$pkg" 2>/dev/null | awk '{print $2}')"
         [[ -n "$installed" ]] || continue
         if is_newer "$installed" "$running"; then
-            echo "kernel-${pkg}"
+            echo "kernel|${pkg}|${installed}|${running}"
             return 0
         fi
     done
     return 1
 }
 
-if reboot_needed; then
+reason="$(reboot_needed || true)"
+body="The system needs to restart to finish applying updates."
+
+if [[ "$reason" == kernel\|* ]]; then
+    IFS='|' read -r _ pkg installed running <<< "$reason" || true
+    body="A newer kernel ($pkg $installed) is installed. Restart to boot into it (running $running)."
+fi
+
+if [[ -n "$reason" ]]; then
     # notify only once per boot
     if [[ ! -f "$marker" ]]; then
         : > "$marker"
@@ -48,6 +56,6 @@ if reboot_needed; then
             --app-name="Reboot Notifier" \
             --icon="system-reboot" \
             "Reboot required" \
-            "A newer kernel is installed. Restart to boot into $(uname -r)."
+            "$body"
     fi
 fi
