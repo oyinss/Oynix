@@ -6,7 +6,8 @@ copy-on-select = clipboard
 
 font-family = "Hack Nerd Font"
 
-font-size = 8
+# Match kitty (kitty.conf: font_size 11.0)
+font-size = 11
 
 window-padding-x = 10
 window-padding-y = 5
@@ -14,6 +15,13 @@ window-padding-y = 5
 background-opacity = 0.98
 
 keybind = global:ctrl+grave_accent=toggle_quick_terminal
+
+# Kitty-style cursor trail (the animation kitty gets from `cursor_trail 1`,
+# kitty.conf:10). Ghostty has no native equivalent, so this is a cursor-aware
+# custom shader: https://github.com/sahaj-b/ghostty-cursor-shaders
+# Tune inside the shader: DURATION, MAX_TRAIL_LENGTH, THRESHOLD_MIN_DISTANCE, TRAIL_COLOR.
+custom-shader = shaders/cursor_tail.glsl
+custom-shader-animation = always
 
 # Set the command to execute on launch
 # command = "/home/kalid/.local/bin/ghostty-tmux"
