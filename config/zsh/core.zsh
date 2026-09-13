@@ -13,6 +13,7 @@ ZSH_CONFIG_DIR="$HOME/.config/zsh"
 P10K_CONFIG="$HOME/.p10k.zsh"
 DIRHISTORY_PLUGIN="$ZSH_CONFIG_DIR/custom_plugins/dirhistory.plugin.zsh"
 FIGFONTDIR="$HOME/.config/zsh/figlet-fonts"
+export BET365_BROWSER_PATH="/usr/bin/google-chrome-stable"
 
 # -------------------------------------------------------
 # Display username banner
@@ -46,7 +47,10 @@ plug "zap-zsh/sudo"
 plug "djui/alias-tips"
 plug "esc/conda-zsh-completion"
 plug "hlissner/zsh-autopair"
-plug "romkatv/powerlevel10k"
+# powerlevel10k is deliberately NOT loaded inside tmux: the tmux status bar already
+# carries cwd, git status, host and time, so panes get a plain prompt instead (see the
+# prompt section near the bottom of this file).
+[[ -n $TMUX ]] || plug "romkatv/powerlevel10k"
 
 # -------------------------------------------------------
 # Load dirhistory without OMZ
@@ -66,7 +70,7 @@ export HISTTIMEFORMAT="%F %T "
 # -------------------------------------------------------
 # Powerlevel10k instant prompt
 # -------------------------------------------------------
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+if [[ -z ${TMUX:-} && -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
@@ -92,7 +96,18 @@ fi
 # -------------------------------------------------------
 # Powerlevel10k config
 # -------------------------------------------------------
-[[ -f "$P10K_CONFIG" ]] && source "$P10K_CONFIG"
+if [[ -n ${TMUX:-} ]]; then
+  # Inside tmux: no powerlevel10k (see the `plug` guard above). The status bar shows
+  # cwd, git status, host and time, so the prompt is just a prompt char.
+  PROMPT=$'%{\e[38;2;122;162;247m%}❯%{\e[0m%} '
+else
+  # NOTE: `p10k configure` only leaves ~/.zshrc alone when it finds BOTH the instant
+  # prompt source line (above) and a `source <config>` line in a form it recognises --
+  # `~/.p10k.zsh` is one of them. A variable indirection such as `source $P10K_CONFIG`
+  # is NOT recognised, and the wizard then rewrites ~/.zshrc with `mv`, which replaces
+  # the symlink to this file with a regular copy. Keep this literal line here.
+  [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+fi
 
 # -------------------------------------------------------
 # Additional setopts (not covered by supercharge)
@@ -214,3 +229,8 @@ function random_bars() {
 setopt HIST_IGNORE_SPACE
 export HISTIGNORE='sudo -S *'
 export CUA_DRIVER_RS_ENABLE_WAYLAND=1
+
+# `p10k configure` searches this file for its instant-prompt line and a recognised
+# `source ~/.p10k.zsh` line; both now live in the prompt section above, which is what
+# stops the wizard from rewriting ~/.zshrc (and replacing the symlink to this file with
+# a regular copy). See the NOTE in that section before changing those two lines.
