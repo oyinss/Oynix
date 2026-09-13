@@ -12,23 +12,49 @@
 # ===========================
 
 phpm() {
+  local reset=$'\033[0m'
+  local blue=$'\033[38;5;75m'
+  local cyan=$'\033[38;5;80m'
+  local green=$'\033[38;5;114m'
+  local yellow=$'\033[38;5;221m'
+  local purple=$'\033[38;5;141m'
+  local red=$'\033[38;5;203m'
+  local orange=$'\033[38;5;208m'
+
   local PHP_BIN="${PHP_BIN:-php}"
   local PHP_PORT="${PHP_PORT:-9000}"
   local PHP_HOST="${PHP_HOST:-localhost}"
 
   declare -A commands=(
-    ["🐘 PHP Version"]="$PHP_BIN -v"
-    ["📦 PHP Modules"]="$PHP_BIN -m"
-    ["🧪 PHP Info"]="$PHP_BIN -r 'phpinfo();'"    ["🔀 Switch PHP Version"]="switch_php_version"    ["🌐 Start PHP Dev Server"]="start_php_server"
-    ["⛔ Stop PHP Dev Server"]="stop_php_server"
-    ["📁 Serve Current Directory"]="serve_here"
-    ["📄 Run PHP File"]="run_php_file"
-    ["🧹 Syntax Check (Lint)"]="lint_php_file"
-    ["🛠 Composer Install"]="composer install"
-    ["⬆️ Composer Update"]="composer update"
-    ["📦 Composer Dump Autoload"]="composer dump-autoload"
-    
-    ["�🚪 Quit"]=":"
+    ["󰋼 PHP Version"]="$PHP_BIN -v"
+    ["󰏗 PHP Modules"]="$PHP_BIN -m"
+    ["󰍹 PHP Info"]="$PHP_BIN -r 'phpinfo();'"
+    ["󰑓 Switch PHP Version"]="switch_php_version"
+    ["󰐊 Start PHP Dev Server"]="start_php_server"
+    ["󰓛 Stop PHP Dev Server"]="stop_php_server"
+    ["󰉋 Serve Current Directory"]="serve_here"
+    ["󰐊 Run PHP File"]="run_php_file"
+    ["󰄬 Syntax Check (Lint)"]="lint_php_file"
+    ["󰇚 Composer Install"]="composer install"
+    ["󰚰 Composer Update"]="composer update"
+    ["󰏗 Composer Dump Autoload"]="composer dump-autoload"
+    ["󰅙 Quit"]=":"
+  )
+
+  local -a menu=(
+    "${cyan}󰋼${reset} ${purple}PHP Version${reset}"
+    "${cyan}󰏗${reset} ${purple}PHP Modules${reset}"
+    "${cyan}󰍹${reset} ${purple}PHP Info${reset}"
+    "${yellow}󰑓${reset} ${purple}Switch PHP Version${reset}"
+    "${green}󰐊${reset} ${purple}Start PHP Dev Server${reset}"
+    "${red}󰓛${reset} ${purple}Stop PHP Dev Server${reset}"
+    "${green}󰉋${reset} ${purple}Serve Current Directory${reset}"
+    "${green}󰐊${reset} ${purple}Run PHP File${reset}"
+    "${cyan}󰄬${reset} ${purple}Syntax Check (Lint)${reset}"
+    "${green}󰇚${reset} ${purple}Composer Install${reset}"
+    "${yellow}󰚰${reset} ${purple}Composer Update${reset}"
+    "${blue}󰏗${reset} ${purple}Composer Dump Autoload${reset}"
+    "${orange}󰅙${reset} ${purple}Quit${reset}"
   )
 
   # -------- Helper Functions --------
@@ -133,7 +159,7 @@ phpm() {
     selected=$(for php_path in "${available_versions[@]}"; do
         version=$("$php_path" -v 2>/dev/null | head -1)
         printf '%s\t%s (%s)\n' "$php_path" "$(basename "$php_path")" "$version"
-      done | fzf --height 10 --prompt "🔀 Select PHP version → " --border)
+      done | fzf --no-preview --height 10 --prompt "Select PHP version › " --border)
 
     # Restore xtrace state
     case "$_xset_state" in *x*) set -x;; esac
@@ -167,12 +193,13 @@ phpm() {
 
 
   # -------- Single Menu Selection --------
-  local choice
-  choice=$(printf "%s\n" "${(@k)commands}" | \
-    fzf --height 20 --prompt "🐘 PHP Manager → " --border)
+  local choice plain_choice
+  choice=$(printf "%s\n" "${menu[@]}" | \
+    fzf --no-preview --ansi --height 20 --prompt "PHP Manager › " --border)
+  plain_choice=$(print -r -- "$choice" | sed $'s/\x1B\\[[0-9;]*[A-Za-z]//g')
 
-  [[ -z "$choice" || "$choice" == "🚪 Quit" ]] && return
-  eval "${commands[$choice]}"
+  [[ -z "$plain_choice" || "$plain_choice" == "󰅙 Quit" ]] && return
+  eval "${commands[$plain_choice]}"
 }
 
 # ===========================

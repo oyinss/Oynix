@@ -1,44 +1,53 @@
 #!/bin/zsh
 
 git.() {
-  # Define an associative array with emoji-labeled Git commands
+  local reset=$'\033[0m'
+  local blue=$'\033[38;5;75m'
+  local cyan=$'\033[38;5;80m'
+  local green=$'\033[38;5;114m'
+  local yellow=$'\033[38;5;221m'
+  local purple=$'\033[38;5;141m'
+  local red=$'\033[38;5;203m'
+  local orange=$'\033[38;5;208m'
+
+  # Define an associative array with Git commands
   declare -A commands=(
-    ["🆕 Initialize New Git Repository"]="git init"
-    ["📝 Create README.md"]="touch README.md"
-    ["📥 Add All Files in Current Directory"]="git add ."
-    ["📦 Add All Changes (Including Deletions)"]="git add --all"
-    ["💬 Commit with Message"]="git_commit"
-    ["✏️ Amend Last Commit Message"]="git_amend_commit"
-    ["🌐 Add Remote Origin"]="git_remote_add"
-    ["🌲 Set Default Branch to main"]="git branch -M main"
-    ["🚀 Push Initial Commit to Origin main"]="git push -u origin main"
-    ["💣 Force Push to Current Branch"]="git push -f"
-    ["🔍 Check Git Status"]="git status -sb"
-    ["🌿 List Git Branches"]="git branch"
-    ["🔀 Rename Current Branch"]="git_rename_branch"
-    ["📂 Checkout Branch"]="git_checkout"
-    ["🌱 Create and Switch to New Branch"]="git_create_branch"
-    ["📡 Fetch Remote Data"]="git fetch"
-    ["🔀 Merge Current Branch with Remote"]="git merge"
-    ["⬇️ Pull Changes from Remote"]="git pull"
-    ["🧬 Rebase Branch"]="git_rebase"
-    ["↩️ Revert Last Commit"]="git revert HEAD"
-    ["🧹 Reset Staged Changes"]="git reset"
-    ["⏪ Hard Reset to HEAD~1"]="git_reset_hard 1"
-    ["⏪ Hard Reset to HEAD~2"]="git_reset_hard 2"
-    ["⏪ Hard Reset to HEAD~3"]="git_reset_hard 3"
-    ["🔄 Reset Local to Remote on Main"]="git_reset_local_to_remote_main"
-    ["🔗 Check Remote URLs"]="git remote -v"
-    ["📡 Set Fetch URL for Origin"]="git_set_fetch_url"
-    ["📤 Set Push URL for Origin"]="git_set_push_url"
-    ["📜 View Git Log"]="git log"
-    ["🧽 Unstage Files"]="git rm --cached"
-    ["⚡️ Enable Fast-Forward Merges"]="git config --global pull.ff true"
-    ["🌍 Configure Global Git Ignore"]="git_configure_global_ignore"
-    ["🗒 Edit .gitignore in Current Directory"]="edit_repo_gitignore"
-    ["🔑 Update Git Credential/Access Token"]="git_update_credential"
-    ["🛠 Edit Git Credentials File"]="edit_git_credentials"
-    ["🚪 Quit"]=": # Quit the function"
+    ["󰐕 Initialize New Git Repository"]="git init"
+    ["󰏫 Create README.md"]="touch README.md"
+    ["󰇚 Add All Files in Current Directory"]="git add ."
+    ["󰏗 Add All Changes (Including Deletions)"]="git add --all"
+    ["󰆓 Commit with Message"]="git_commit"
+    ["󰏫 Amend Last Commit Message"]="git_amend_commit"
+    ["󰖟 Add Remote Origin"]="git_remote_add"
+    ["󰉋 Set Default Branch to main"]="git branch -M main"
+    ["󰕒 Push Initial Commit to Origin main"]="git push -u origin main"
+    ["󰕒 Force Push to Current Branch"]="git push -f"
+    ["󰒓 Check Git Status"]="git status -sb"
+    ["󰉋 List Git Branches"]="git branch"
+    ["󰑓 Rename Current Branch"]="git_rename_branch"
+    ["󰉋 Checkout Branch"]="git_checkout"
+    ["󰐕 Create and Switch to New Branch"]="git_create_branch"
+    ["󰇚 Fetch Remote Data"]="git fetch"
+    ["󰑓 Merge Current Branch with Remote"]="git merge"
+    ["󰇚 Pull Changes from Remote"]="git pull"
+    ["󰑓 Rebase Branch"]="git_rebase"
+    ["󰑕 Revert Last Commit"]="git revert HEAD"
+    ["󰑕 Reset Staged Changes"]="git reset"
+    ["󰑕 Hard Reset to HEAD~1"]="git_reset_hard 1"
+    ["󰑕 Hard Reset to HEAD~2"]="git_reset_hard 2"
+    ["󰑕 Hard Reset to HEAD~3"]="git_reset_hard 3"
+    ["󰑓 Reset Local to Remote on Main"]="git_reset_local_to_remote_main"
+    ["󰖟 Check Remote URLs"]="git remote -v"
+    ["󰖟 Set Fetch URL for Origin"]="git_set_fetch_url"
+    ["󰖟 Set Push URL for Origin"]="git_set_push_url"
+    ["󰒓 View Git Log"]="git log"
+    ["󰑕 Unstage Files"]="git rm --cached"
+    ["󰒓 Enable Fast-Forward Merges"]="git config --global pull.ff true"
+    ["󰏫 Configure Global Git Ignore"]="git_configure_global_ignore"
+    ["󰏫 Edit .gitignore in Current Directory"]="edit_repo_gitignore"
+    ["󰌋 Update Git Credential/Access Token"]="git_update_credential"
+    ["󰏫 Edit Git Credentials File"]="edit_git_credentials"
+    ["󰅙 Quit"]=": # Quit the function"
   )
 
   # Helper functions
@@ -194,16 +203,56 @@ git.() {
     nvim "$cred_file"
   }
 
-  while true; do
-    local choice
-    choice=$(printf "%s\n" "${(@k)commands}" | fzf --height 20 --prompt "🔧 Select a Git Command: " --border)
+  local -a menu=(
+    "${green}󰐕${reset} ${purple}Initialize New Git Repository${reset}"
+    "${yellow}󰏫${reset} ${purple}Create README.md${reset}"
+    "${green}󰇚${reset} ${purple}Add All Files in Current Directory${reset}"
+    "${blue}󰏗${reset} ${purple}Add All Changes (Including Deletions)${reset}"
+    "${green}󰆓${reset} ${purple}Commit with Message${reset}"
+    "${yellow}󰏫${reset} ${purple}Amend Last Commit Message${reset}"
+    "${blue}󰖟${reset} ${purple}Add Remote Origin${reset}"
+    "${yellow}󰉋${reset} ${purple}Set Default Branch to main${reset}"
+    "${green}󰕒${reset} ${purple}Push Initial Commit to Origin main${reset}"
+    "${red}󰕒${reset} ${purple}Force Push to Current Branch${reset}"
+    "${cyan}󰒓${reset} ${purple}Check Git Status${reset}"
+    "${cyan}󰉋${reset} ${purple}List Git Branches${reset}"
+    "${yellow}󰑓${reset} ${purple}Rename Current Branch${reset}"
+    "${blue}󰉋${reset} ${purple}Checkout Branch${reset}"
+    "${green}󰐕${reset} ${purple}Create and Switch to New Branch${reset}"
+    "${cyan}󰇚${reset} ${purple}Fetch Remote Data${reset}"
+    "${yellow}󰑓${reset} ${purple}Merge Current Branch with Remote${reset}"
+    "${green}󰇚${reset} ${purple}Pull Changes from Remote${reset}"
+    "${yellow}󰑓${reset} ${purple}Rebase Branch${reset}"
+    "${red}󰑕${reset} ${purple}Revert Last Commit${reset}"
+    "${red}󰑕${reset} ${purple}Reset Staged Changes${reset}"
+    "${red}󰑕${reset} ${purple}Hard Reset to HEAD~1${reset}"
+    "${red}󰑕${reset} ${purple}Hard Reset to HEAD~2${reset}"
+    "${red}󰑕${reset} ${purple}Hard Reset to HEAD~3${reset}"
+    "${red}󰑓${reset} ${purple}Reset Local to Remote on Main${reset}"
+    "${cyan}󰖟${reset} ${purple}Check Remote URLs${reset}"
+    "${yellow}󰖟${reset} ${purple}Set Fetch URL for Origin${reset}"
+    "${yellow}󰖟${reset} ${purple}Set Push URL for Origin${reset}"
+    "${cyan}󰒓${reset} ${purple}View Git Log${reset}"
+    "${red}󰑕${reset} ${purple}Unstage Files${reset}"
+    "${yellow}󰒓${reset} ${purple}Enable Fast-Forward Merges${reset}"
+    "${yellow}󰏫${reset} ${purple}Configure Global Git Ignore${reset}"
+    "${yellow}󰏫${reset} ${purple}Edit .gitignore in Current Directory${reset}"
+    "${yellow}󰌋${reset} ${purple}Update Git Credential/Access Token${reset}"
+    "${yellow}󰏫${reset} ${purple}Edit Git Credentials File${reset}"
+    "${orange}󰅙${reset} ${purple}Quit${reset}"
+  )
 
-    if [[ -z "$choice" || "$choice" == "🚪 Quit" ]]; then
-      echo "👋 Exiting Git Command Manager."
+  while true; do
+    local choice plain_choice
+    choice=$(printf "%s\n" "${menu[@]}" | fzf --no-preview --ansi --height 20 --prompt "Git › " --border)
+    plain_choice=$(print -r -- "$choice" | sed $'s/\x1B\\[[0-9;]*[A-Za-z]//g')
+
+    if [[ -z "$plain_choice" || "$plain_choice" == "󰅙 Quit" ]]; then
+      echo "Exiting Git Command Manager."
       break
     fi
 
-    eval "${commands[$choice]}"
+    eval "${commands[$plain_choice]}"
     break
   done
 }

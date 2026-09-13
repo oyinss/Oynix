@@ -13,44 +13,65 @@ alias ctlrestart="sudo systemctl restart"
 alias ctlstatus="sudo systemctl status"
 
 ctl() {
-  echo "🔄 Reloading systemd daemon..."
+  local reset=$'\033[0m'
+  local blue=$'\033[38;5;75m'
+  local cyan=$'\033[38;5;80m'
+  local green=$'\033[38;5;114m'
+  local yellow=$'\033[38;5;221m'
+  local purple=$'\033[38;5;141m'
+  local red=$'\033[38;5;203m'
+  local orange=$'\033[38;5;208m'
+
+  echo "Reloading systemd daemon..."
   sudo systemctl daemon-reload
 
   local service=$(systemctl list-units --type=service --all --no-pager --no-legend \
-    | awk '{print $1}' | fzf --prompt="🛎️ Select service: " --height=15)
+    | awk '{print $1}' | fzf --no-preview --prompt="Select service: " --height=15)
 
   if [[ -z "$service" ]]; then
-    echo "❌ No service selected."
     return 1
   fi
 
-  echo "🟢 Selected: $service"
+  echo "Selected: $service"
 
-  local action=$(printf "✅ Enable now\n⛔ Disable now\n▶️ Start\n🔄 Restart\n📋 Status\n🚪 Cancel" | fzf --prompt="⚙️ Action: " --height=7)
+  local -a menu=(
+    "${green}󰄬${reset} ${purple}Enable now${reset}"
+    "${red}󰅖${reset} ${purple}Disable now${reset}"
+    "${green}󰐊${reset} ${purple}Start${reset}"
+    "${yellow}󰑓${reset} ${purple}Restart${reset}"
+    "${cyan}󰒓${reset} ${purple}Status${reset}"
+    "${orange}󰅙${reset} ${purple}Cancel${reset}"
+  )
 
-  case "$action" in
-    "✅ Enable now")
+  local action plain_action
+  action=$(printf "%s\n" "${menu[@]}" | fzf --no-preview --ansi --prompt="Action › " --height=7)
+  plain_action=$(print -r -- "$action" | sed $'s/\x1B\\[[0-9;]*[A-Za-z]//g')
+
+  case "$plain_action" in
+    "󰄬 Enable now")
       sudo systemctl enable "$service"
-      echo "✅ Enabled $service"
+      echo "Enabled $service"
       ;;
-    "⛔ Disable now")
+    "󰅖 Disable now")
       sudo systemctl disable "$service"
-      echo "⛔ Disabled $service"
+      echo "Disabled $service"
       ;;
-    "▶️ Start")
+    "󰐊 Start")
       sudo systemctl start "$service"
-      echo "▶️ Started $service"
+      echo "Started $service"
       ;;
-    "🔄 Restart")
+    "󰑓 Restart")
       sudo systemctl restart "$service"
-      echo "🔄 Restarted $service"
+      echo "Restarted $service"
       ;;
-    "📋 Status")
+    "󰒓 Status")
       systemctl status "$service"
       ;;
-    "🚪 Cancel"|*)
-      echo "🚪 Cancelled."
+    "󰅙 Cancel")
+      echo "Cancelled."
+      ;;
+    *)
+      return
       ;;
   esac
 }
-

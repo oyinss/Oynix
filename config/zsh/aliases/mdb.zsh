@@ -435,6 +435,7 @@ EOF
     local choice
     local plain_choice
     choice=$(printf "%s\n" "${menu[@]}" | fzf \
+      --no-preview \
       --ansi \
       --height 20 \
       --prompt "MariaDB › " \
