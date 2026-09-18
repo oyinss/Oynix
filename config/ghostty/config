@@ -16,6 +16,13 @@ background-opacity = 0.98
 
 keybind = global:ctrl+grave_accent=toggle_quick_terminal
 
+# Ctrl+Space is tmux's prefix, but Ghostty never delivers it to the terminal (GTK swallows
+# the space key with ctrl held), so the prefix was unreachable. Send the NUL byte ourselves:
+# 0x00 is exactly what Ctrl+Space encodes, and tmux reads it as C-Space (verified -- tmux
+# accepts 0x00 as the prefix, and kitty's CSI 32;5u encoding too). `text:` consumes the
+# keypress, so this replaces the default encoding instead of duplicating it.
+keybind = ctrl+space=text:\x00
+
 # Kitty-style cursor trail (the animation kitty gets from `cursor_trail 1`,
 # kitty.conf:10). Ghostty has no native equivalent, so this is a cursor-aware
 # custom shader: https://github.com/sahaj-b/ghostty-cursor-shaders
