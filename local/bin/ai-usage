@@ -1,0 +1,472 @@
+#!/usr/bin/env python3
+"""ai-usage — one JSON snapshot of AI coding-provider limits for the Quickshell bar.
+
+Credentials are read from files that already exist on this machine and are never
+printed, logged, or included in the output. Only numeric quota fields and reset
+timestamps leave this process.
+
+Providers
+  codex        ~/.codex/auth.json (ChatGPT OAuth) -> chatgpt.com/backend-api/wham/usage
+  opencode-go  `ai-agent-credential opencode-go`  -> opencode.ai/zen/go/v1/usage
+
+Output (stdout, exit 0 even when a provider fails):
+  {"updated": 1758100000, "providers": [
+     {"id": "codex", "label": "Codex", "icon": "smart_toy", "plan": "Pro Lite",
+      "primary": 32.0, "warning": false,
+      "windows": [{"id": "weekly", "label": "Weekly", "used_percent": 32.0,
+                   "resets_in": 548021, "resets_at": 1790191292}],
+      "error": ""}]}
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import pathlib
+import shutil
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+
+HOME = pathlib.Path.home()
+TIMEOUT = 12
+USER_AGENT = "ai-usage/1.0 (Quickshell bar)"
+
+PLAN_NAMES = {
+    "prolite": "Pro Lite",
+    "plus": "Plus",
+    "pro": "Pro",
+    "free": "Free",
+    "team": "Team",
+    "business": "Business",
+    "enterprise": "Enterprise",
+    "max": "Max",
+    "ultra": "Ultra",
+}
+
+
+def http_get(url: str, headers: dict[str, str]) -> tuple[int, str]:
+    request = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            return response.status, response.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as error:
+        return error.code, error.read().decode("utf-8", "replace")[:400]
+    except Exception as error:  # network, DNS, TLS, timeout
+        return -1, f"{type(error).__name__}: {error}"
+
+
+def window_label(seconds: int | float | None) -> str:
+    if not seconds:
+        return "Window"
+    days = seconds / 86400
+    if 6 <= days <= 8:
+        return "Weekly"
+    hours = seconds / 3600
+    if 4 <= hours <= 6:
+        return "Session (5h)"
+    if 20 <= hours <= 28:
+        return "Daily"
+    if 27 <= days <= 32:
+        return "Monthly"
+    if hours < 3:
+        return f"{round(hours)}h window"
+    return f"{round(days)}d window"
+
+
+# --------------------------------------------------------------------------- codex
+
+
+def fetch_codex() -> dict:
+    auth_path = HOME / ".codex" / "auth.json"
+    entry: dict = {
+        "id": "codex",
+        "label": "Codex",
+        "icon": "smart_toy",
+        "plan": "",
+        "primary": None,
+        "warning": False,
+        "windows": [],
+        "extras": [],
+        "notes": [],
+        "error": "",
+    }
+    if not auth_path.exists():
+        entry["error"] = "not signed in (~/.codex/auth.json missing)"
+        return entry
+    try:
+        auth = json.loads(auth_path.read_text())
+    except Exception as error:
+        entry["error"] = f"unreadable auth: {error}"
+        return entry
+
+    tokens = auth.get("tokens") or {}
+    token = tokens.get("access_token")
+    if not token:
+        entry["error"] = "no ChatGPT access token; run `codex login`"
+        return entry
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json",
+        "User-Agent": USER_AGENT,
+    }
+    if tokens.get("account_id"):
+        headers["ChatGPT-Account-Id"] = tokens["account_id"]
+
+    status, body = http_get("https://chatgpt.com/backend-api/wham/usage", headers)
+    if status == 401 or status == 403:
+        entry["error"] = "token expired; run `codex login`"
+        return entry
+    if status != 200:
+        entry["error"] = f"API error {status}"
+        return entry
+
+    try:
+        payload = json.loads(body)
+    except Exception:
+        entry["error"] = "unparseable response"
+        return entry
+
+    entry["plan"] = PLAN_NAMES.get(str(payload.get("plan_type", "")).lower(), str(payload.get("plan_type") or ""))
+    entry["windows"], entry["extras"] = codex_windows_and_extras(payload)
+
+    # The Codex CLI records windows the usage API leaves out (e.g. its 5-hour limit).
+    try:
+        local_windows = codex_local_windows()
+    except Exception:
+        local_windows = []
+    known = {(window["label"], round(window["used_percent"])) for window in entry["windows"]}
+    for window in local_windows:
+        key = (window["label"], round(window["used_percent"]))
+        if key in known:
+            continue
+        known.add(key)
+        entry["windows"].append(window)
+
+    entry["notes"] = codex_notes(entry)
+
+    if not entry["windows"]:
+        entry["error"] = "no rate-limit windows in response"
+    return entry
+
+
+def codex_notes(entry: dict) -> list[str]:
+    """Say out loud which lanes this account does not publish, so a single-row panel
+    reads as 'that is all there is' instead of 'the widget forgot something'."""
+    labels = " ".join(window["label"].lower() for window in entry["windows"])
+    notes = []
+    if "5h" not in labels and "session" not in labels:
+        notes.append("Session (5h): not reported for this plan")
+    if "monthly" not in labels:
+        notes.append("Monthly: not part of the Codex API")
+    return notes
+
+
+def codex_window(percent, limit_window_seconds, resets_at, reset_after_seconds, window_id=None, label=None) -> dict:
+    if reset_after_seconds is None and resets_at:
+        reset_after_seconds = max(0, int(resets_at - time.time()))
+    return {
+        "id": window_id or "window",
+        "label": label or window_label(limit_window_seconds),
+        "used_percent": float(percent),
+        "resets_in": int(reset_after_seconds or 0),
+        "resets_at": int(resets_at) if resets_at else 0,
+    }
+
+
+def codex_windows_and_extras(payload: dict) -> tuple[list[dict], list[dict]]:
+    """Every window the Codex usage API reports, plus credits/spend rows.
+
+    Nothing is assumed about which windows exist: an account can expose only the
+    weekly window (`primary_window` with limit_window_seconds 604800) and leave
+    `secondary_window` / `additional_rate_limits` null, in which case this returns
+    a single window and no extras.
+    """
+    windows: list[dict] = []
+    extras: list[dict] = []
+
+    rate_limit = payload.get("rate_limit") or {}
+    for window_id, key in (("primary", "primary_window"), ("secondary", "secondary_window")):
+        window = rate_limit.get(key)
+        if not isinstance(window, dict) or window.get("used_percent") is None:
+            continue
+        windows.append(
+            codex_window(
+                window["used_percent"],
+                window.get("limit_window_seconds"),
+                window.get("reset_at", window.get("resets_at")),
+                window.get("reset_after_seconds"),
+                window_id=window_id,
+            )
+        )
+
+    # Model-specific limits (e.g. a 5-hour "Spark" window) live in their own list.
+    for index, item in enumerate(payload.get("additional_rate_limits") or []):
+        if not isinstance(item, dict):
+            continue
+        inner = item.get("rate_limit") or {}
+        window = inner.get("primary_window") or inner.get("secondary_window")
+        if not isinstance(window, dict) or window.get("used_percent") is None:
+            continue
+        name = item.get("limit_name") or item.get("metered_feature") or "Extra limit"
+        windows.append(
+            codex_window(
+                window["used_percent"],
+                window.get("limit_window_seconds"),
+                window.get("reset_at", window.get("resets_at")),
+                window.get("reset_after_seconds"),
+                window_id=f"extra-{index}",
+                label=f"{name} · {window_label(window.get('limit_window_seconds'))}",
+            )
+        )
+
+    credits = payload.get("credits") or {}
+    balance = credits.get("balance")
+    if credits.get("has_credits") and balance not in (None, "", "0"):
+        try:
+            extras.append({"label": "Credits", "value": f"${float(balance):.2f}"})
+        except (TypeError, ValueError):
+            pass
+
+    spend = payload.get("spend_control") or {}
+    limit = spend.get("individual_limit")
+    if isinstance(limit, dict) and limit.get("limit") is not None:
+        used = limit.get("used")
+        currency = limit.get("currency") or "USD"
+        value = f"${float(used or 0):.2f} / ${float(limit['limit']):.2f}" if currency == "USD" \
+            else f"{used} / {limit['limit']} {currency}"
+        extras.append({"label": "Extra usage", "value": value})
+    elif limit is not None and not isinstance(limit, dict):
+        extras.append({"label": "Extra usage limit", "value": str(limit)})
+
+    reset_credits = payload.get("rate_limit_reset_credits") or {}
+    if reset_credits.get("available_count"):
+        extras.append({"label": "Rate-limit resets", "value": str(reset_credits["available_count"])})
+
+    return windows, extras
+
+
+# -------------------------------------------------------------- codex local (CLI)
+
+ROLLOUT_ROOTS = (HOME / ".codex" / "sessions", HOME / ".codex" / "archived_sessions")
+ROLLOUT_MAX_AGE_SECONDS = 7 * 86400
+ROLLOUT_MAX_FILES = 10
+ROLLOUT_TAIL_BYTES = 512 * 1024
+
+
+def short_limit_name(name: str) -> str:
+    """`GPT-5.3-Codex-Spark` → `Spark`: the panel row is narrow and the last segment
+    is the part that distinguishes the limit."""
+    text = (name or "").strip()
+    if not text:
+        return ""
+    if "-Codex-" in text:
+        return text.split("-Codex-")[-1]
+    return text.split("-")[-1] if text.count("-") >= 2 else text
+
+
+def windows_from_rate_limits_object(obj: dict, sampled_at: float, now: float, fallback_id: str) -> list[dict]:
+    """Turn one CLI `rate_limits` object into windows, dropping windows that expired
+    before the sample was taken (a 5-hour window sampled 16 hours ago says nothing)."""
+    windows: list[dict] = []
+    limit_id = obj.get("limit_id") or fallback_id
+    limit_name = short_limit_name(obj.get("limit_name") or "")
+    for lane in ("primary", "secondary"):
+        data = obj.get(lane)
+        if not isinstance(data, dict) or data.get("used_percent") is None:
+            continue
+        minutes = data.get("window_minutes") or 0
+        if minutes and (now - sampled_at) > minutes * 60:
+            continue  # the window already rolled over since this sample
+        resets_at = data.get("resets_at") or 0
+        windows.append(
+            {
+                "id": f"{limit_id}-{lane}",
+                "label": f"{limit_name} · {window_label(minutes * 60)}" if limit_name else window_label(minutes * 60),
+                "used_percent": float(data["used_percent"]),
+                "resets_in": int(max(0, resets_at - now)) if resets_at else 0,
+                "resets_at": int(resets_at),
+                "age_seconds": int(now - sampled_at),
+            }
+        )
+    return windows
+
+
+def codex_local_windows(now: float | None = None) -> list[dict]:
+    """Newest `rate_limits` sample per limit id from the Codex CLI's own rollout logs.
+
+    This is the only place a 5-hour Codex window shows up: the account's usage API
+    reports a single weekly window, while the CLI records whatever the backend told it
+    (e.g. GPT-5.3-Codex-Spark's 5-hour and weekly limits).
+    """
+    now = now or time.time()
+    files: list[pathlib.Path] = []
+    for root in ROLLOUT_ROOTS:
+        if root.exists():
+            files.extend(root.rglob("*.jsonl"))
+    files = [p for p in files if (now - p.stat().st_mtime) <= ROLLOUT_MAX_AGE_SECONDS]
+    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+
+    windows: list[dict] = []
+    seen: set[str] = set()
+    for path in files[:ROLLOUT_MAX_FILES]:
+        sampled_at = path.stat().st_mtime
+        try:
+            size = path.stat().st_size
+            with path.open("rb") as handle:
+                if size > ROLLOUT_TAIL_BYTES:
+                    handle.seek(size - ROLLOUT_TAIL_BYTES)
+                tail = handle.read().decode("utf-8", "replace")
+        except OSError:
+            continue
+        for line in tail.splitlines():
+            if '"rate_limits"' not in line:
+                continue
+            index = line.find('"rate_limits"')
+            payload = line[line.find(":", index) + 1:].lstrip()
+            try:
+                obj, _ = json.JSONDecoder().raw_decode(payload)
+            except ValueError:
+                continue
+            if not isinstance(obj, dict):
+                continue
+            limit_id = obj.get("limit_id") or "codex-local"
+            if limit_id in seen:
+                continue
+            seen.add(limit_id)
+            windows.extend(windows_from_rate_limits_object(obj, sampled_at, now, limit_id))
+    return windows
+
+
+# ---------------------------------------------------------------------- opencode-go
+
+
+def opencode_go_key() -> str:
+    helper = shutil.which("ai-agent-credential") or str(HOME / ".local" / "bin" / "ai-agent-credential")
+    if os.access(helper, os.X_OK):
+        try:
+            result = subprocess.run([helper, "opencode-go"], capture_output=True, text=True, timeout=10)
+            if result.returncode == 0 and result.stdout.strip():
+                return result.stdout.strip()
+        except Exception:
+            pass
+    key_file = HOME / ".config" / "ai-agents" / "credentials" / "opencode-go.key"
+    if key_file.exists():
+        return key_file.read_text().strip()
+    return ""
+
+
+def fetch_opencode_go() -> dict:
+    entry: dict = {
+        "id": "opencode-go",
+        "label": "OpenCode Go",
+        "icon": "bolt",
+        "plan": "",
+        "primary": None,
+        "warning": False,
+        "windows": [],
+        "extras": [],
+        "notes": [],
+        "error": "",
+    }
+    key = opencode_go_key()
+    if not key:
+        entry["error"] = "no API key (~/.config/ai-agents/credentials/opencode-go.key)"
+        return entry
+
+    status, body = http_get(
+        "https://opencode.ai/zen/go/v1/usage",
+        {"Authorization": f"Bearer {key}", "Accept": "application/json", "User-Agent": USER_AGENT},
+    )
+    if status in (401, 403):
+        entry["error"] = "API key rejected"
+        return entry
+    if status != 200:
+        entry["error"] = f"API error {status}"
+        return entry
+
+    try:
+        payload = json.loads(body)
+    except Exception:
+        entry["error"] = "unparseable response"
+        return entry
+
+    usage = payload.get("usage") or {}
+    for window_id, key_name, label in (
+        ("rolling", "rolling", "Rolling"),
+        ("weekly", "weekly", "Weekly"),
+        ("monthly", "monthly", "Monthly"),
+    ):
+        window = usage.get(key_name)
+        if not isinstance(window, dict):
+            continue
+        percent = window.get("percent", window.get("usedPercent", window.get("used_percent")))
+        if percent is None:
+            continue
+        resets_at = window.get("resetsAt", window.get("resets_at"))
+        resets_in = 0
+        if isinstance(resets_at, str) and resets_at:
+            try:
+                cleaned = resets_at.replace("Z", "+00:00")
+                resets_in = int(max(0, __import__("datetime").datetime.fromisoformat(cleaned).timestamp() - time.time()))
+            except Exception:
+                resets_in = 0
+        elif isinstance(resets_at, (int, float)) and resets_at:
+            resets_in = int(max(0, resets_at / 1000 if resets_at > 1e12 else resets_at - time.time()))
+        entry["windows"].append(
+            {
+                "id": window_id,
+                "label": label,
+                "used_percent": float(percent),
+                "resets_in": resets_in,
+                "resets_at": int(resets_at / 1000) if isinstance(resets_at, (int, float)) and resets_at > 1e12 else 0,
+            }
+        )
+
+    if not entry["windows"]:
+        entry["error"] = "no usage windows in response"
+    return entry
+
+
+# ----------------------------------------------------------------------------- main
+
+PRIMARY_WINDOW = {"codex": "primary", "opencode-go": "weekly"}
+FETCHERS = (fetch_codex, fetch_opencode_go)
+
+
+def main() -> int:
+    providers: list[dict] = []
+    for fetcher in FETCHERS:
+        try:
+            entry = fetcher()
+        except Exception as error:  # never let one provider break the snapshot
+            entry = {
+                "id": fetcher.__name__.replace("fetch_", "").replace("_", "-"),
+                "label": fetcher.__name__,
+                "icon": "smart_toy",
+                "plan": "",
+                "primary": None,
+                "warning": False,
+                "windows": [],
+                "extras": [],
+                "notes": [],
+                "error": f"{type(error).__name__}: {error}",
+            }
+        preferred = PRIMARY_WINDOW.get(entry["id"])
+        chosen = next((w for w in entry["windows"] if w["id"] == preferred), None)
+        chosen = chosen or (entry["windows"][0] if entry["windows"] else None)
+        entry["primary"] = chosen["used_percent"] if chosen else None
+        entry["primary_label"] = chosen["label"] if chosen else ""
+        entry["warning"] = any(w["used_percent"] >= 80 for w in entry["windows"])
+        providers.append(entry)
+
+    json.dump({"updated": int(time.time()), "providers": providers}, sys.stdout, separators=(",", ":"))
+    sys.stdout.write("\n")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

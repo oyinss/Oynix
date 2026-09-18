@@ -324,8 +324,7 @@ Item { // Bar content region
                 invertSide: Config?.options.bar.bottom
             }
 
-            CodexUsageIndicator {
-                visible: CodexUsage.available
+            AiUsageIndicator {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.fillWidth: false
                 Layout.fillHeight: true
