@@ -265,7 +265,12 @@ _tm_rename_session() {
 _tm_repo_session() {
   emulate -L zsh
   local reset=$'\033[0m' purple=$'\033[38;5;141m' cyan=$'\033[38;5;80m'
-  local base="${TMUX_REPO_ROOT:-$HOME/Apex/primordial}"
+  local base="$TMUX_REPO_ROOT"
+
+  if [[ -z "$base" ]]; then
+    echo "ERROR: TMUX_REPO_ROOT is not set (point it at the directory holding your git repos)." >&2
+    return 1
+  fi
 
   if [[ ! -d "$base" ]]; then
     echo "ERROR: repo root not found: $base" >&2
@@ -443,8 +448,12 @@ tmx() {
     local pause=""
     read -k 1 -r "pause?Press Enter to continue or q to quit..."
     echo
+    # `q` quits now. Setting TMUX_DONE alone was not enough: its only check sits at the top
+    # of the loop *after* fzf is called, so the menu reappeared instead of exiting, and the
+    # pause key had to be followed by one more menu interaction.
     if [[ "$pause" == [qQ] ]]; then
       TMUX_DONE=1
+      break
     fi
   done
 }
