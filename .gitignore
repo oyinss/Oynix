@@ -2,3 +2,9 @@
 .vscode/
 
 
+
+# Personal snippet/identifier libraries — machine-local, not for publication.
+# The files stay on disk; the expander loads them from the config dir.
+config/text_expander/empty.yml
+config/text_expander/base.yml
+config/text_expander/xfiles.yml
