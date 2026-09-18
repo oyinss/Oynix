@@ -1,5 +1,62 @@
 #!/bin/zsh
 
+# `ls` the way the fish shell has it (config.fish: `alias ls 'eza --icons=auto'`):
+# eza with file-type icons and colours.
+#
+# eza is resolved ONCE, to an absolute path, and never looked up by name again: a shell
+# whose PATH lacks /usr/bin (which is how this config produced "command not found: eza"
+# -- note `zz` carries its own /usr/bin/zoxide fallback for the same reason) must not
+# error on every cd. If eza cannot be found at all, _ls_eza degrades to plain ls so
+# `la`, the `l` picker and the cd hook all keep working.
+typeset -g _ls_eza_bin=''
+if (( $+commands[eza] )); then
+  _ls_eza_bin=${commands[eza]}
+else
+  for _c in /usr/bin/eza /usr/local/bin/eza /bin/eza; do
+    [[ -x $_c ]] && { _ls_eza_bin=$_c; break }
+  done
+  unset _c
+fi
+
+# The helper is deliberately NOT named `ls`: ohmyzsh's theme-and-appearance.zsh (loaded
+# via zap) sets `alias ls='ls --color=auto'`, and zsh resolves aliases when it *parses*
+# a block -- so a `ls() { }` inside a conditional fails with "parse error near `()'".
+_ls_eza() {
+  emulate -L zsh
+  # --icons=always rather than fish's `--icons=auto`: auto silently drops the icons in
+  # terminals its detection does not recognise, and this branch only ever runs on a tty.
+  # Non-tty output (pipes, $(...), redirects) goes to real ls, because eza prints
+  # nothing at all when given no path and stdout is a pipe.
+  if [[ -n $_ls_eza_bin && -t 1 ]]; then
+    "$_ls_eza_bin" --icons=always "$@"
+  else
+    command ls "$@"
+  fi
+}
+
+alias ls='_ls_eza'
+
+# `la` — same listing as `ls` but including hidden files (.env, .gitignore, ...).
+la() {
+  emulate -L zsh
+  _ls_eza -a "$@"
+}
+
+# List the new directory every time you cd, in the same style (hidden files included).
+# Registered on chpwd so it fires on cd/pushd only -- never on shell startup, never in
+# scripts, and never when output is redirected (the -t 1 guard inside _ls_eza covers
+# pipes; LS_ON_CD=0 disables it for one cd or a whole shell).
+_ls_on_cd() {
+  emulate -L zsh
+  [[ -t 1 ]] || return
+  [[ ${LS_ON_CD:-1} == 0 ]] && return
+  (( $+functions[_ls_eza] )) || return
+  _ls_eza -a
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook chpwd _ls_on_cd
+
 l() {
   local reset=$'\033[0m'
   local blue=$'\033[38;5;75m'
@@ -12,13 +69,13 @@ l() {
 
   # Define an associative array with list commands
   declare -A commands=(
-    ["󰉋 All Files (with icons)"]="eza -a --icons=auto --sort=name --group-directories-first -1"
-    ["󰈙 Row View"]="eza -h --icons=auto"
-    ["󰈙 All Row View"]="eza -a --icons=auto --sort=name --group-directories-first"
-    ["󰏗 One Line"]="eza -1 --icons=auto"
-    ["󰒓 Details"]="eza -lh --icons=auto"
-    ["󰒓 All Details"]="eza -lha --icons=auto --sort=name --group-directories-first"
-    ["󰉋 Directories Only"]="eza -lhD --icons=auto"
+    ["󰉋 All Files (with icons)"]="_ls_eza -a"
+    ["󰈙 Row View"]="_ls_eza -h"
+    ["󰈙 All Row View"]="_ls_eza -a --sort=name --group-directories-first"
+    ["󰏗 One Line"]="_ls_eza -1"
+    ["󰒓 Details"]="_ls_eza -lh"
+    ["󰒓 All Details"]="_ls_eza -lha --sort=name --group-directories-first"
+    ["󰉋 Directories Only"]="_ls_eza -lhD"
   )
 
   local -a menu=(
