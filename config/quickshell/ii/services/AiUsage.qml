@@ -82,7 +82,10 @@ Singleton {
 
     Process {
         id: usageProcess
-        command: ["ai-usage"]
+        // Absolute, $HOME-based path: the shell's PATH does not include ~/.local/bin,
+        // so invoking `ai-usage` by bare name silently failed and left the popup
+        // stuck on "Refreshing…".
+        command: [Quickshell.env("HOME") + "/.local/bin/ai-usage"]
 
         stdout: StdioCollector {
             onStreamFinished: root.applyPayload(text)

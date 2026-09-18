@@ -151,7 +151,13 @@ LazyLoader {
                     const targetWindow = target ? target.Window.window : null;
                     if (!root.QsWindow || !targetWindow)
                         return Appearance.sizes.barHeight;
-                    return root.QsWindow.mapFromItem(target, (target.width - root.anchorWidth) / 2, 0).x;
+                    // Centre under the bar item, then keep the panel on screen: a wide
+                    // panel under a right-side item would otherwise run off the edge.
+                    const margin = Appearance.sizes.elevationMargin;
+                    const centered = root.QsWindow.mapFromItem(target, (target.width - root.anchorWidth) / 2, 0).x;
+                    const screenWidth = popupWindow.screen ? popupWindow.screen.width : root.QsWindow.width;
+                    const maxLeft = screenWidth - root.anchorWidth - margin - 10;
+                    return Math.max(margin, Math.min(centered, maxLeft));
                 }
                 return Appearance.sizes.verticalBarWidth;
             }
@@ -162,7 +168,11 @@ LazyLoader {
                 const targetWindow = target ? target.Window.window : null;
                 if (!root.QsWindow || !targetWindow)
                     return Appearance.sizes.barHeight;
-                return root.QsWindow.mapFromItem(target, 0, (target.height - root.anchorHeight) / 2).y;
+                const margin = Appearance.sizes.elevationMargin;
+                const centered = root.QsWindow.mapFromItem(target, 0, (target.height - root.anchorHeight) / 2).y;
+                const screenHeight = popupWindow.screen ? popupWindow.screen.height : root.QsWindow.height;
+                const maxTop = screenHeight - root.anchorHeight - margin - 10;
+                return Math.max(margin, Math.min(centered, maxTop));
             }
             right: Appearance.sizes.verticalBarWidth
             bottom: Appearance.sizes.barHeight
