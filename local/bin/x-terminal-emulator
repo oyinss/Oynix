@@ -1,0 +1,60 @@
+#!/bin/sh
+# x-terminal-emulator — Debian's "the user's configured terminal" entry point.
+#
+# Why this exists on an Arch box: Hermes Desktop's session menu item
+# "Open in terminal" launches `hermes --tui --resume <id>` by probing an ordered
+# ladder of emulators (apps/desktop/electron/external-terminal.ts) whose FIRST
+# rung is `x-terminal-emulator`. Arch provides no such binary, so the ladder
+# falls through to konsole (KDE) before it ever reaches kitty. Providing this
+# shim makes the ladder's own "user's choice" rung resolve here, with no rebuild
+# of the app and nothing to re-apply after `hermes update`.
+#
+# Switch emulator: change TERMINAL below (ghostty | kitty | konsole | alacritty
+# | wezterm), or override for one launch with HERMES_TERMINAL_EMULATOR=…
+# `$TERMINAL` from the shell is deliberately NOT consulted: this runs inside the
+# desktop app, whose environment is the session's (TERMINAL="kitty" is exported
+# in zsh/exports.zsh), so reading it would silently override the choice here.
+#
+# Contract: x-terminal-emulator [-e|--|-x] PROGRAM [ARGS...]
+# (the `-e` form is what Hermes Desktop passes: `x-terminal-emulator -e /bin/sh <script>`)
+
+TERMINAL="${HERMES_TERMINAL_EMULATOR:-kitty}"
+
+case "${1:-}" in
+  -e | -- | -x) shift ;;
+esac
+
+need() {
+  _bin=$(command -v "$1" 2>/dev/null || true)
+  if [ -z "$_bin" ]; then
+    echo "x-terminal-emulator: $1 is not installed" >&2
+    exit 127
+  fi
+}
+
+case "$TERMINAL" in
+  ghostty)
+    need ghostty
+    exec "$_bin" -e "$@"
+    ;;
+  kitty)
+    need kitty
+    exec "$_bin" "$@" # kitty takes the program to run as a plain argument
+    ;;
+  konsole)
+    need konsole
+    exec "$_bin" -e "$@"
+    ;;
+  alacritty)
+    need alacritty
+    exec "$_bin" -e "$@"
+    ;;
+  wezterm)
+    need wezterm
+    exec "$_bin" start -- "$@"
+    ;;
+  *)
+    echo "x-terminal-emulator: unknown TERMINAL '$TERMINAL'" >&2
+    exit 2
+    ;;
+esac
