@@ -110,6 +110,46 @@ else
 fi
 
 # -------------------------------------------------------
+# tmux status bar: keep the directory in step with cd
+# -------------------------------------------------------
+if [[ -n ${TMUX:-} ]]; then
+  # tmux only re-runs the `#()` jobs in the status line every status-interval (5s), so the
+  # directory and git chip lag behind a cd. A status refresh re-runs them on the spot, so
+  # ask for one from chpwd rather than polling harder.
+  #
+  # The binary is resolved ONCE, by absolute path. A name lookup here runs on every cd and
+  # has already produced `zsh: command not found: tmux` -- same failure mode as eza in
+  # aliases/list.zsh: the file exists and PATH is fine, but the shell's command hash is
+  # stale. Fall back to the usual system locations, and if tmux still cannot be found the
+  # hook degrades to a silent no-op that records the evidence once per cd in
+  # $XDG_CACHE_HOME/tmux-refresh-miss.log. A missing binary must never print an error on
+  # every cd.
+  _tmux_bin=${commands[tmux]:-}
+  if [[ -z $_tmux_bin ]]; then
+    for _c in /usr/bin/tmux /usr/local/bin/tmux /bin/tmux; do
+      [[ -x $_c ]] && { _tmux_bin=$_c; break }
+    done
+    unset _c
+  fi
+
+  _tmux_refresh_status() {
+    if [[ -n $_tmux_bin ]]; then
+      "$_tmux_bin" refresh-client -S 2>/dev/null
+    else
+      # grouped so the stderr redirect applies BEFORE the >> is opened: if the cache
+      # directory is missing, a bare `>>file 2>/dev/null` still prints the open failure
+      {
+        printf '%s PATH=%s TMUX=%s\n' "$(date '+%F %T')" "$PATH" "${TMUX:-}" \
+          >>"${XDG_CACHE_HOME:-$HOME/.cache}/tmux-refresh-miss.log"
+      } 2>/dev/null
+    fi
+    return 0   # a chpwd hook returning non-zero warns on every cd
+  }
+  autoload -Uz add-zsh-hook
+  add-zsh-hook chpwd _tmux_refresh_status
+fi
+
+# -------------------------------------------------------
 # Additional setopts (not covered by supercharge)
 # -------------------------------------------------------
 setopt correct             # auto correct mistakes
