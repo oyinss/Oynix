@@ -7,4 +7,12 @@ unset ELECTRON_RUN_AS_NODE
 unset DISPLAY
 export HERMES_DESKTOP_DISABLE_GPU=1
 
-exec setsid -f "$HOME/.local/bin/hermes" desktop --skip-build "$@"
+app="$HOME/.hermes/hermes-agent/apps/desktop/release/linux-unpacked/Hermes"
+
+if [ ! -x "$app" ]; then
+    exec setsid -f "$HOME/.local/bin/hermes" desktop --skip-build "$@"
+fi
+
+# Launch the packaged app directly so a stale desktop.electron_flags setting
+# cannot force Electron back onto the unavailable X11 backend.
+exec setsid -f "$app" --disable-setuid-sandbox "$@" --ozone-platform=wayland
