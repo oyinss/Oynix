@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Hermes runs natively on Wayland. Do not expose Hyprland's wedged XWayland
+# socket to Electron startup helpers, which otherwise block before a window is
+# created. Software rendering also avoids the NVIDIA 615 GPU crash loop.
+unset ELECTRON_RUN_AS_NODE
+unset DISPLAY
+export HERMES_DESKTOP_DISABLE_GPU=1
+
+exec setsid -f "$HOME/.local/bin/hermes" desktop --skip-build "$@"
