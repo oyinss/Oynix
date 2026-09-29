@@ -42,15 +42,18 @@ la() {
   _ls_eza -a "$@"
 }
 
-# List the new directory every time you cd, in the same style (hidden files included).
-# Registered on chpwd so it fires on cd/pushd only -- never on shell startup, never in
-# scripts, and never when output is redirected (the -t 1 guard inside _ls_eza covers
-# pipes; LS_ON_CD=0 disables it for one cd or a whole shell).
+# On every cd: print where you landed, then list it in the same style (hidden files
+# included). Registered on chpwd so it fires on cd/pushd only -- never on shell startup,
+# never in scripts, and never when output is redirected (the -t 1 guard covers pipes;
+# LS_ON_CD=0 disables the whole hook for one cd or a whole shell).
 _ls_on_cd() {
   emulate -L zsh
   [[ -t 1 ]] || return
   [[ ${LS_ON_CD:-1} == 0 ]] && return
   (( $+functions[_ls_eza] )) || return
+  # %~ collapses $HOME to ~ ; swap it for %d if you want the absolute path.
+  # Colour 75 matches the `blue` used by the menus in this file.
+  print -rP -- "%F{75}%B%~%b%f"
   _ls_eza -a
 }
 
