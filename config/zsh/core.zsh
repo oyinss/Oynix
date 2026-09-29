@@ -47,10 +47,7 @@ plug "zap-zsh/sudo"
 plug "djui/alias-tips"
 plug "esc/conda-zsh-completion"
 plug "hlissner/zsh-autopair"
-# powerlevel10k is deliberately NOT loaded inside tmux: the tmux status bar already
-# carries cwd, git status, host and time, so panes get a plain prompt instead (see the
-# prompt section near the bottom of this file).
-[[ -n $TMUX ]] || plug "romkatv/powerlevel10k"
+plug "romkatv/powerlevel10k"
 
 # -------------------------------------------------------
 # Load dirhistory without OMZ
@@ -70,7 +67,7 @@ export HISTTIMEFORMAT="%F %T "
 # -------------------------------------------------------
 # Powerlevel10k instant prompt
 # -------------------------------------------------------
-if [[ -z ${TMUX:-} && -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
@@ -96,18 +93,12 @@ fi
 # -------------------------------------------------------
 # Powerlevel10k config
 # -------------------------------------------------------
-if [[ -n ${TMUX:-} ]]; then
-  # Inside tmux: no powerlevel10k (see the `plug` guard above). The status bar shows
-  # cwd, git status, host and time, so the prompt is just a prompt char.
-  PROMPT=$'%{\e[38;2;122;162;247m%}❯%{\e[0m%} '
-else
-  # NOTE: `p10k configure` only leaves ~/.zshrc alone when it finds BOTH the instant
-  # prompt source line (above) and a `source <config>` line in a form it recognises --
-  # `~/.p10k.zsh` is one of them. A variable indirection such as `source $P10K_CONFIG`
-  # is NOT recognised, and the wizard then rewrites ~/.zshrc with `mv`, which replaces
-  # the symlink to this file with a regular copy. Keep this literal line here.
-  [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-fi
+# NOTE: `p10k configure` only leaves ~/.zshrc alone when it finds BOTH the instant prompt
+# source line (above) and a `source <config>` line in a form it recognises -- `~/.p10k.zsh`
+# is one of them. A variable indirection such as `source $P10K_CONFIG` is NOT recognised,
+# and the wizard then rewrites ~/.zshrc with `mv`, which replaces the symlink to this file
+# with a regular copy. Keep this literal line here.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # -------------------------------------------------------
 # tmux status bar: keep the directory in step with cd
