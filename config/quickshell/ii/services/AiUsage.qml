@@ -26,6 +26,9 @@ Singleton {
     readonly property real activePercent: (root.active && root.active.primary !== null
         && root.active.primary !== undefined) ? root.active.primary : -1
     readonly property bool warning: root.active ? root.active.warning === true : false
+    readonly property bool activePrimaryWarning: root.activePercent >= 80
+    readonly property var activeWindows: root.active?.windows ?? []
+    readonly property string activePlan: root.active?.plan ?? ""
     readonly property string displayText: root.activePercent >= 0 ? `${Math.round(root.activePercent)}%` : "--"
     readonly property string activeLabel: root.active ? root.active.label : "AI usage"
 

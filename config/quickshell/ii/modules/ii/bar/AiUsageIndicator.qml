@@ -12,8 +12,9 @@ import qs.modules.common.widgets
 MouseArea {
     id: root
 
-    readonly property color usageColor: AiUsage.warning ? Appearance.m3colors.m3error
-                                                        : Appearance.colors.colOnLayer1
+    // Colour the primary percentage shown here, not a different hidden window.
+    readonly property color usageColor: AiUsage.activePrimaryWarning ? Appearance.m3colors.m3error
+                                                                     : Appearance.colors.colOnLayer1
     readonly property bool hasData: AiUsage.active !== null && AiUsage.activePercent >= 0
 
     implicitWidth: horizontalContent.implicitWidth
