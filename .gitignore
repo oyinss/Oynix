@@ -8,6 +8,3 @@
 config/text_expander/empty.yml
 config/text_expander/base.yml
 config/text_expander/xfiles.yml
-
-# Local third-party Quickshell checkout — not part of the public dotfiles.
-config/quickshell/end4-pC/
