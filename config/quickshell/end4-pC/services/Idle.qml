@@ -34,8 +34,12 @@ Singleton {
         window: PanelWindow {
             // Inhibitor requires a "visible" surface
             // Actually not lol
-            implicitWidth: 0
-            implicitHeight: 0
+            // Keep a real, transparent surface so the compositor registers the
+            // idle-inhibit object reliably. A zero-sized surface is ignored by
+            // some compositor versions.
+            implicitWidth: 1
+            implicitHeight: 1
+            visible: true
             color: "transparent"
             // Just in case...
             anchors {
