@@ -1,6 +1,13 @@
 #!/bin/zsh
 
 flut() {
+  # Anything after `flut` goes straight through, so a one-off build does not mean
+  # leaving the menu behind. Bare `flut` still opens it.
+  if (( $# > 0 )); then
+    flutter "$@"
+    return
+  fi
+
   local reset=$'\033[0m'
   local blue=$'\033[38;5;75m'
   local cyan=$'\033[38;5;80m'
@@ -17,6 +24,8 @@ flut() {
     ["󰇚 Get Packages"]="flutter pub get"
     ["󰆴 Clean"]="flutter clean"
     ["󰐕 Build APK"]="flutter build apk --release"
+    ["󰐕 Build APK (split per ABI)"]="flutter build apk --release --split-per-abi"
+    ["󰐕 Build Release (split APKs + Play bundle)"]="build_release"
     ["󰐕 Build AppBundle"]="flutter build appbundle --release"
     ["󰖟 Build Web (auto renderer)"]="flutter build web --release"
     ["󰖟 Build Web (html)"]="flutter build web --release --web-renderer html"
@@ -38,6 +47,8 @@ flut() {
     "${green}󰇚${reset} ${purple}Get Packages${reset}"
     "${red}󰆴${reset} ${purple}Clean${reset}"
     "${green}󰐕${reset} ${purple}Build APK${reset}"
+    "${green}󰐕${reset} ${purple}Build APK (split per ABI)${reset}"
+    "${green}󰐕${reset} ${purple}Build Release (split APKs + Play bundle)${reset}"
     "${green}󰐕${reset} ${purple}Build AppBundle${reset}"
     "${green}󰖟${reset} ${purple}Build Web (auto renderer)${reset}"
     "${green}󰖟${reset} ${purple}Build Web (html)${reset}"
@@ -63,6 +74,14 @@ flut() {
 
 update_sdk() {
   (cd ~/flutter && git pull && flutter upgrade)
+}
+
+# Both release artifacts in one pass: the per-ABI APKs for sideloading onto a phone,
+# and the app bundle the Play Console takes. The bundle only runs if the APKs built,
+# so a failure reports itself instead of being buried under a second build.
+build_release() {
+  flutter build apk --release --split-per-abi || return 1
+  flutter build appbundle --release
 }
 
 create_project() {
