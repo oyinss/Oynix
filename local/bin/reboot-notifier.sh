@@ -48,14 +48,15 @@ if [[ "$reason" == kernel\|* ]]; then
 fi
 
 if [[ -n "$reason" ]]; then
-    # notify only once per boot
-    if [[ ! -f "$marker" ]]; then
-        : > "$marker"
+    # Notify once per reboot reason, not once per boot: another kernel update
+    # can arrive before the user restarts. Older empty markers are retried.
+    if [[ ! -f "$marker" || "$(< "$marker")" != "$reason" ]]; then
         notify-send \
             --urgency=critical \
             --app-name="Reboot Notifier" \
             --icon="system-reboot" \
             "Reboot required" \
             "$body"
+        printf '%s\n' "$reason" > "$marker"
     fi
 fi
