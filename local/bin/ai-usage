@@ -24,6 +24,7 @@ import json
 import os
 import pathlib
 import shutil
+import sqlite3
 import subprocess
 import sys
 import time
@@ -138,12 +139,14 @@ def fetch_codex() -> dict:
         local_windows = codex_local_windows()
     except Exception:
         local_windows = []
-    known = {(window["label"], round(window["used_percent"])) for window in entry["windows"]}
+    # Prefer the authoritative account API when it already reports a window.
+    # Rollout logs can contain an older sample with the same generic label;
+    # adding it creates a misleading second "Weekly" row in AgentsBar.
+    known_labels = {window["label"] for window in entry["windows"]}
     for window in local_windows:
-        key = (window["label"], round(window["used_percent"]))
-        if key in known:
+        if window["label"] in known_labels:
             continue
-        known.add(key)
+        known_labels.add(window["label"])
         entry["windows"].append(window)
 
     entry["notes"] = codex_notes(entry)
@@ -344,7 +347,37 @@ def codex_local_windows(now: float | None = None) -> list[dict]:
 # ---------------------------------------------------------------------- opencode-go
 
 
+def opencode_go_source() -> str:
+    native_path = HOME / ".local" / "share" / "opencode" / "auth.json"
+    try:
+        auth = json.loads(native_path.read_text())
+        if isinstance(auth.get("opencode-go"), dict) and auth["opencode-go"].get("key"):
+            return "OpenCode native auth → ~/.local/share/opencode/auth.json (opencode-go)"
+    except (OSError, ValueError, TypeError):
+        pass
+
+    credentials_dir = pathlib.Path(os.environ.get(
+        "AI_AGENT_CREDENTIALS_DIR",
+        str(HOME / ".config" / "ai-agents" / "credentials"),
+    ))
+    path = credentials_dir / "opencode-go.key"
+    try:
+        display_path = "~/" + str(path.relative_to(HOME))
+    except ValueError:
+        display_path = str(path)
+    return f"legacy ai-agent-credential → {display_path}"
+
+
 def opencode_go_key() -> str:
+    native_path = HOME / ".local" / "share" / "opencode" / "auth.json"
+    try:
+        auth = json.loads(native_path.read_text())
+        native_key = (auth.get("opencode-go") or {}).get("key")
+        if native_key:
+            return native_key
+    except (OSError, ValueError, TypeError):
+        pass
+
     helper = shutil.which("ai-agent-credential") or str(HOME / ".local" / "bin" / "ai-agent-credential")
     if os.access(helper, os.X_OK):
         try:
@@ -364,6 +397,7 @@ def fetch_opencode_go() -> dict:
         "id": "opencode-go",
         "label": "OpenCode Go",
         "icon": "bolt",
+        "source": opencode_go_source(),
         "plan": "",
         "primary": None,
         "warning": False,
@@ -431,10 +465,102 @@ def fetch_opencode_go() -> dict:
     return entry
 
 
+# ------------------------------------------------------------------------ deepseek
+
+
+def deepseek_local_extras() -> list[dict]:
+    db_path = HOME / ".local" / "share" / "opencode" / "opencode.db"
+    if not db_path.exists():
+        return []
+    since = int(time.time()) - 30 * 86400
+    try:
+        with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as connection:
+            sessions, tokens = connection.execute(
+                """
+                SELECT count(*), coalesce(sum(tokens_input + tokens_output + tokens_reasoning
+                    + tokens_cache_read + tokens_cache_write), 0)
+                FROM session
+                WHERE json_extract(model, '$.providerID') = 'deepseek'
+                  AND time_updated >= ?
+                """,
+                (since,),
+            ).fetchone()
+    except (OSError, sqlite3.Error):
+        return []
+
+    if not sessions:
+        return []
+    return [{
+        "label": "Last 30 days",
+        "value": f"{sessions} sessions · {tokens:,} tokens",
+    }]
+
+
+def fetch_deepseek() -> dict:
+    entry: dict = {
+        "id": "deepseek",
+        "label": "DeepSeek",
+        "icon": "deepseek-symbolic",
+        "plan": "API",
+        "primary": None,
+        "warning": False,
+        "windows": [],
+        "extras": deepseek_local_extras(),
+        "notes": [],
+        "error": "",
+    }
+    key_path = HOME / ".config" / "codexbar" / "deepseek-api-key"
+    if not key_path.exists():
+        entry["error"] = "no DeepSeek API key"
+        return entry
+
+    try:
+        key = key_path.read_text().strip()
+    except OSError:
+        entry["error"] = "DeepSeek API key could not be read"
+        return entry
+    if not key:
+        entry["error"] = "no DeepSeek API key"
+        return entry
+
+    status, body = http_get(
+        "https://api.deepseek.com/user/balance",
+        {"Authorization": f"Bearer {key}", "Accept": "application/json", "User-Agent": USER_AGENT},
+    )
+    if status in (401, 403):
+        entry["error"] = "DeepSeek API key rejected"
+        return entry
+    if status != 200:
+        entry["error"] = f"DeepSeek API error {status}"
+        return entry
+
+    try:
+        payload = json.loads(body)
+    except Exception:
+        entry["error"] = "unparseable DeepSeek response"
+        return entry
+
+    balances = payload.get("balance_infos") or []
+    for balance in balances:
+        if not isinstance(balance, dict):
+            continue
+        currency = balance.get("currency") or ""
+        total = balance.get("total_balance")
+        if total is not None:
+            entry["extras"].append({
+                "label": f"Balance ({currency})" if currency else "Balance",
+                "value": str(total),
+            })
+
+    if not entry["extras"]:
+        entry["error"] = "DeepSeek returned no usage or balance data"
+    return entry
+
+
 # ----------------------------------------------------------------------------- main
 
 PRIMARY_WINDOW = {"codex": "primary", "opencode-go": "weekly"}
-FETCHERS = (fetch_codex, fetch_opencode_go)
+FETCHERS = (fetch_codex, fetch_opencode_go, fetch_deepseek)
 
 
 def main() -> int:
