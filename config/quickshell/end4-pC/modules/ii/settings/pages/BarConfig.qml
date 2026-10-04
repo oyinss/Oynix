@@ -51,6 +51,7 @@ ContentPage {
         { id: "activeWindow",      name: Translation.tr("Active Window"),        icon: "subtitles" },
         { id: "powerButton",       name: Translation.tr("Power Button"),         icon: "power_settings_new" },
         { id: "updatesCount",      name: Translation.tr("Updates"),              icon: "deployed_code_update" },
+        { id: "agentsBar",          name: Translation.tr("AgentsBar"),              icon: "data_usage" },
         { id: "docktoPanel",       name: Translation.tr("Dock to Panel"),        icon: "apps" },
         { id: "visualizer",        name: Translation.tr("Visualizer"),           icon: "graphic_eq" },
         { id: "hyprlandXkbIndicator",   name: Translation.tr("Keyboard Layout"), icon: "keyboard" },
@@ -70,6 +71,8 @@ ContentPage {
                 if (w.id === "dynamicIsland") return false
                 if (w.id === "divisor" && Config.options.bar.borderless !== "transparent") return false
                 const multipleAllowed = ["visualizer", "divisor"]
+                if (w.id === "codexUsage" && Config.options.bar.layouts.middleLayout.includes("agentsBar")) return false
+                if (w.id === "agentsBar" && used.includes("codexUsage")) return false
                 return !used.includes(w.id) || multipleAllowed.includes(w.id)
             })
         }
@@ -77,11 +80,14 @@ ContentPage {
         return allWidgets.filter(w => {
             if (w.id === "divisor" && Config.options.bar.borderless !== "transparent") return false
             if (w.id === "dynamicIsland" && (Config.options.bar.vertical || section !== "middle")) return false
+            if (w.id === "agentsBar" && used.includes("codexUsage")) return false
             return !used.includes(w.id) || multipleAllowed.includes(w.id)
         })
     }
 
     function getWidgetName(id) {
+        if (id === "codexUsage" || id === "agentsBar")
+            return Translation.tr("AgentsBar")
         const w = allWidgets.find(w => w.id === id)
         return w ? w.name : id
     }

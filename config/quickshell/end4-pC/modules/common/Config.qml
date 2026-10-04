@@ -858,6 +858,7 @@ Singleton {
             property JsonObject custom: JsonObject {
                 property string distroIcon: "google-gemini-symbolic"
                 property bool colorizeIcon: true
+                property string agentsBarProvider: "opencode-go"
             }
 
             property JsonObject screenRecord: JsonObject {

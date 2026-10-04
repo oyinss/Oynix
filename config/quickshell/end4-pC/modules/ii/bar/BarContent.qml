@@ -34,6 +34,8 @@ Item {
 
     function getWidgetUrl(name) {
         if (!name) return "";
+        if (name === "codexUsage" || name === "agentsBar")
+            return Qt.resolvedUrl("./AgentsBarIndicator.qml");
         let formattedName = name.charAt(0).toUpperCase() + name.slice(1);
         return Qt.resolvedUrl("./" + formattedName + ".qml");
     }
