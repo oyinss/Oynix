@@ -101,6 +101,55 @@ fi
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # -------------------------------------------------------
+# Powerlevel10k: keep the git chip live while idle at the prompt
+# -------------------------------------------------------
+# p10k asks gitstatusd for the repo state only when it draws a new prompt (precmd), so the
+# branch/dirty chip goes stale whenever the repo changes behind the shell's back -- an editor
+# saving a file, another terminal committing, tmux. tmux itself does not have that problem
+# because it re-runs the `#()` jobs in its status line every status-interval; this section gives
+# the prompt the same treatment.
+#
+# Nothing needs to be recomputed from scratch: gitstatusd keeps a cached, mtime-checked answer
+# (sub-millisecond), so the fix is to poke it on a timer and let p10k's own async callback
+# (_p9k_vcs_resume) re-render the VCS segment. TMOUT + TRAPALRM is the zsh idiom for "run this
+# while idle at the prompt": the alarm is armed only while zsh waits for a command line, so it
+# never fires while a command, a pager or a `read` prompt is running, and a child process that
+# owns the terminal (fzf, an editor) blocks it for free.
+#
+# The trap can still fire while a zsh widget is waiting for its next key, and repainting the
+# prompt then would land in the middle of that widget's display. So only a bare prompt with an
+# empty edit buffer is ever touched: $CONTEXT is `start` only at PS1 (it is `vared` in vared and
+# `select` in a select loop), and $BUFFER is empty only when there is no half-typed line and no
+# completion in progress. The cost is that a partially typed line keeps a stale chip until the
+# next prompt -- which is precisely when p10k refreshes on its own anyway.
+#
+# Override the cadence with P10K_GIT_REFRESH_INTERVAL (seconds) before this file is sourced.
+# A second TRAPALRM elsewhere in the config would shadow this one; chain it here if that ever
+# becomes necessary.
+if [[ -o interactive ]]; then
+  typeset -g P10K_GIT_REFRESH_INTERVAL=${P10K_GIT_REFRESH_INTERVAL:-3}
+
+  function _p10k_git_refresh() {
+    # Bare PS1 prompt only: never paint over a completion list, vared, a select menu or typing.
+    [[ ${CONTEXT-} == start && -z ${BUFFER-} ]] || return 0
+    # No daemon means p10k fell back to plain `git status` on precmd: there is no cached answer
+    # to refresh, and a repaint would only redraw the same stale chip.
+    (( $+GITSTATUS_DAEMON_PID_POWERLEVEL9K )) || return 0
+    # These are p10k's own async plumbing; skip quietly on a p10k that no longer defines them.
+    (( $+functions[gitstatus_query_p9k_] && $+functions[_p9k_vcs_resume] &&
+       $+functions[_p9k_vcs_status_for_dir] )) || return 0
+    # Only repos p10k has already seen are worth a tick, so sitting in $HOME or /tmp stays silent.
+    _p9k_vcs_status_for_dir || return 0
+    # -t 0 makes the query async: the callback repaints the prompt, the line editor never blocks.
+    gitstatus_query_p9k_ -d $PWD -t 0 -c '_p9k_vcs_resume 1' POWERLEVEL9K 2>/dev/null
+    return 0
+  }
+
+  TMOUT=$P10K_GIT_REFRESH_INTERVAL
+  TRAPALRM() { _p10k_git_refresh }
+fi
+
+# -------------------------------------------------------
 # tmux status bar: keep the directory in step with cd
 # -------------------------------------------------------
 if [[ -n ${TMUX:-} ]]; then
