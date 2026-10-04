@@ -367,8 +367,17 @@
   typeset -g POWERLEVEL9K_VCS_CONFLICTED_BACKGROUND=3
   typeset -g POWERLEVEL9K_VCS_LOADING_BACKGROUND=8
 
-  # Branch icon. Set this parameter to '\UE0A0 ' for the popular Powerline branch icon.
-  typeset -g POWERLEVEL9K_VCS_BRANCH_ICON='\uF126 '
+  # These icons mirror the git chip in the tmux status line, drawn by
+  # local/bin/tmux-git-status.sh as: U+F09B octocat + U+E0A0 Powerline branch + branch name
+  # + '+staged' + '!modified' + '?untracked' (the '+'/'!'/'?' markers and the ⇡/⇣ arrows in
+  # my_git_formatter below already match it). Change both sides together.
+
+  # Branch icon: U+E0A0, the Powerline branch (the wizard's alternative to the default \uF126).
+  typeset -g POWERLEVEL9K_VCS_BRANCH_ICON='\uE0A0 '
+
+  # Segment icon: the octocat, for every remote p10k can detect -- the tmux chip does not vary
+  # it per provider either. Overrides the nerdfont-v3 defaults (\uF1D3 fallback, \uF113 github).
+  typeset -g POWERLEVEL9K_VCS_VISUAL_IDENTIFIER_EXPANSION=$'\uF09B'
 
   # Untracked files icon. It's really a question mark, your font isn't broken.
   # Change the value of this parameter to show a different icon.
