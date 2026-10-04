@@ -1,0 +1,13 @@
+[Unit]
+Description=KDE Connect daemon (phone integration for the desktop session)
+Documentation=man:kdeconnectd(8)
+
+[Service]
+Type=dbus
+BusName=org.kde.kdeconnect
+ExecStart=/usr/bin/kdeconnectd
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target
