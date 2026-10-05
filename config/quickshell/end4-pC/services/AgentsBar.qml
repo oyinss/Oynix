@@ -48,8 +48,12 @@ Singleton {
                 minute: "2-digit"
             })
         }
-        if (window.resets_in)
-            return `resets in ${Math.ceil(Number(window.resets_in) / 3600)}h`
+        if (window.resets_in) {
+            const seconds = Number(window.resets_in)
+            if (seconds >= 86400)
+                return `resets in ${Math.ceil(seconds / 86400)}d`
+            return `resets in ${Math.ceil(seconds / 3600)}h`
+        }
         return "Reset time unavailable"
     }
 
