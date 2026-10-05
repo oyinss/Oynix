@@ -1,0 +1,10 @@
+[Unit]
+Description=PISOL Local OTP Notifications
+
+[Service]
+ExecStart=%h/.local/bin/pisol-otp-notify.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
