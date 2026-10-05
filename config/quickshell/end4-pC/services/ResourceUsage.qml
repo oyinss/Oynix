@@ -19,8 +19,21 @@ Singleton {
     property real swapFree: 0
     property real swapUsed: swapTotal - swapFree
     property real swapUsedPercentage: swapTotal > 0 ? (swapUsed / swapTotal) : 0
+    property real memoryAvailable: 0
+    property real memoryCached: 0
+    property real memoryBuffers: 0
     property real cpuUsage: 0
     property var previousCpuStats
+    property string loadAverage: ""
+    property int cpuCoreCount: 0
+    property int swappiness: 0
+    property var disks: []
+    property bool gpuAvailable: false
+    property string gpuName: ""
+    property real gpuUsage: 0
+    property real gpuTemp: 0
+    property real gpuMemoryUsed: 0
+    property real gpuMemoryTotal: 0
 
     property string maxAvailableMemoryString: kbToGbString(ResourceUsage.memoryTotal)
     property string maxAvailableSwapString: kbToGbString(ResourceUsage.swapTotal)
@@ -84,18 +97,67 @@ Singleton {
 
     Process {
         id: diskProc
-        command: ["df", "-k", "/"]
+        command: ["df", "-kP"]
         stdout: StdioCollector {
             onStreamFinished: {
+                const rows = [];
                 const lines = text.trim().split("\n");
-                if (lines.length >= 2) {
-                    const parts = lines[1].trim().split(/\s+/).map(Number);
-                    if (parts.length >= 4) {
-                        root.diskTotal = parts[1];
-                        root.diskUsed  = parts[2];
-                        root.diskFree  = parts[3];
-                    }
+                for (let i = 1; i < lines.length; i++) {
+                    const parts = lines[i].trim().split(/\s+/);
+                    if (parts.length < 6)
+                        continue;
+                    rows.push({
+                        fs: parts[0],
+                        total: Number(parts[1]),
+                        used: Number(parts[2]),
+                        free: Number(parts[3]),
+                        mount: parts.slice(5).join(" ")
+                    });
                 }
+                root.disks = rows;
+                const rootRow = rows.find((row) => row.mount === "/");
+                if (rootRow) {
+                    root.diskTotal = rootRow.total;
+                    root.diskUsed  = rootRow.used;
+                    root.diskFree  = rootRow.free;
+                }
+            }
+        }
+    }
+
+    Process {
+        id: coreCountProc
+        command: ["nproc"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.cpuCoreCount = Number(text.trim()) || 0;
+            }
+        }
+    }
+
+    Process {
+        id: gpuProc
+        environment: ({ LANG: "C", LC_ALL: "C" })
+        command: ["bash", "-c", 'if command -v nvidia-smi >/dev/null 2>&1; then nvidia-smi --query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total,name --format=csv,noheader,nounits 2>/dev/null | head -1; else for c in /sys/class/drm/card*/device/gpu_busy_percent; do [ -r "$c" ] && { echo "$(cat "$c")",0,0,0,GPU; break; }; done; fi']
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const line = (text.trim().split("\n")[0] ?? "").trim();
+                if (line.length === 0) {
+                    root.gpuAvailable = false;
+                    return;
+                }
+                const parts = line.split(",").map((part) => part.trim());
+                if (parts.length < 4) {
+                    root.gpuAvailable = false;
+                    return;
+                }
+                root.gpuUsage = (Number(parts[0]) || 0) / 100;
+                root.gpuTemp = Number(parts[1]) || 0;
+                root.gpuMemoryUsed = (Number(parts[2]) || 0) * 1024;
+                root.gpuMemoryTotal = (Number(parts[3]) || 0) * 1024;
+                root.gpuName = parts.slice(4).join(", ");
+                root.gpuAvailable = true;
             }
         }
     }
@@ -134,6 +196,8 @@ Singleton {
         onTriggered: {
             fileMeminfo.reload()
             fileStat.reload()
+            fileLoadavg.reload()
+            fileSwappiness.reload()
 
             if (root.thermalPath.length > 0) {
                 fileTemp.reload()
@@ -149,11 +213,20 @@ Singleton {
             diskProc.running = false
             diskProc.running = true
 
+            gpuProc.running = false
+            gpuProc.running = true
+
             const textMeminfo = fileMeminfo.text()
             memoryTotal = Number(textMeminfo.match(/MemTotal: *(\d+)/)?.[1] ?? 1)
             memoryFree  = Number(textMeminfo.match(/MemAvailable: *(\d+)/)?.[1] ?? 0)
+            memoryAvailable = memoryFree
+            memoryCached = Number(textMeminfo.match(/^Cached: *(\d+)/m)?.[1] ?? 0)
+            memoryBuffers = Number(textMeminfo.match(/^Buffers: *(\d+)/m)?.[1] ?? 0)
             swapTotal   = Number(textMeminfo.match(/SwapTotal: *(\d+)/)?.[1] ?? 1)
             swapFree    = Number(textMeminfo.match(/SwapFree: *(\d+)/)?.[1] ?? 0)
+
+            loadAverage = fileLoadavg.text().trim().split(/\s+/).slice(0, 3).join(" ")
+            swappiness = Number(fileSwappiness.text().trim()) || 0
 
             const textStat = fileStat.text()
             const cpuLine  = textStat.match(/^cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/)
@@ -176,6 +249,8 @@ Singleton {
 
     FileView { id: fileMeminfo; path: "/proc/meminfo" }
     FileView { id: fileStat;    path: "/proc/stat" }
+    FileView { id: fileLoadavg;    path: "/proc/loadavg" }
+    FileView { id: fileSwappiness; path: "/proc/sys/vm/swappiness" }
 
     Process {
         id: findCpuMaxFreqProc

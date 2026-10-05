@@ -12,13 +12,19 @@ Rectangle {
     required property real value
     required property string sublabel
     property color sublabelColor: Appearance.colors.colOnSurfaceVariant
-    property int cardWidth: 150 
+    property int cardWidth: 150
+    property bool interactive: false
+
+    signal clicked()
 
     width: cardWidth
     height: 96 
     radius: 16 
     
-    color: Appearance.colors.colSurfaceContainerLow
+    color: interactive && hoverArea.containsMouse ? Appearance.colors.colSurfaceContainerHigh : Appearance.colors.colSurfaceContainerLow
+    Behavior on color {
+        animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+    }
 
     function usageColor(v) {
         if (v > 0.9) return Appearance.colors.colError
@@ -88,6 +94,15 @@ Rectangle {
             valueBarHeight: 6 
 
         }
+    }
+
+    MouseArea {
+        id: hoverArea
+        anchors.fill: parent
+        hoverEnabled: root.interactive
+        enabled: root.interactive
+        cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
+        onClicked: root.clicked()
     }
 
     border.width: root.value > 0.9 ? 1.5 : 0
