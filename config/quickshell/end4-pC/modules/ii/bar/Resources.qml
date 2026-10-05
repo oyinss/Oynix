@@ -7,9 +7,12 @@ import QtQuick.Layouts
 BarWidgetSwitcherArea {
     id: root
     property bool alwaysShowAllResources: false
+    property bool resourcesPopupOpen: false
     horizontalExtraPadding: 12
 
     hoverEnabled: !Config.options.bar.tooltips.clickToShow
+
+    onClicked: root.resourcesPopupOpen = !root.resourcesPopupOpen
 
     rowDefault: Component {
         RowLayout {
@@ -176,6 +179,8 @@ BarWidgetSwitcherArea {
     }
 
     ResourcesPopup {
-        hoverTarget: root
+        opened: root.resourcesPopupOpen
+        anchorItem: root
+        onRequestClose: root.resourcesPopupOpen = false
     }
 }
