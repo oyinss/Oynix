@@ -26,10 +26,12 @@ RippleButton {
         GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
     }
 
-    MaterialSymbol {
+    CustomIcon {
         anchors.centerIn: parent
-        iconSize: 18
-        text: "search"
+        width: 18
+        height: 18
+        source: "arch-symbolic.svg"
+        colorize: true
         color: Appearance.colors.colOnLayer0
     }
 }
