@@ -2,6 +2,7 @@ pragma Singleton
 import qs.modules.common
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 
 /**
@@ -12,6 +13,14 @@ Singleton {
 
     property alias inhibit: idleInhibitor.enabled
     inhibit: false
+
+    // Belt-and-suspenders: also hold a D-Bus ScreenSaver inhibit, which
+    // hypridle honors directly. Covers cases where the Wayland
+    // idle-inhibit protocol path silently fails to suppress idle.
+    Process {
+        command: ["bash", "-c", "exec $HOME/.local/bin/idle-inhibit-dbus"]
+        running: root.inhibit
+    }
 
     Connections {
         target: Persistent
