@@ -1,5 +1,25 @@
 #!/bin/zsh
 
+# Move into the nearest Flutter project (a directory holding pubspec.yaml).
+#
+# `flutter build` fails outside a project, and the old menu swallowed that: the
+# split-APK step would fail, `build_release` would return before the bundle, and
+# the menu closed with no bundle and no obvious reason. This makes the failure a
+# sentence instead.
+_flut_enter_project() {
+  local dir="$PWD"
+  while [[ "$dir" != "/" && ! -f "$dir/pubspec.yaml" ]]; do
+    dir="${dir:h}"
+  done
+
+  if [[ ! -f "$dir/pubspec.yaml" ]]; then
+    print -u2 "flut: no pubspec.yaml in $PWD or any parent - run this from a Flutter project."
+    return 1
+  fi
+
+  cd "$dir" || return 1
+}
+
 flut() {
   # Anything after `flut` goes straight through, so a one-off build does not mean
   # leaving the menu behind. Bare `flut` still opens it.
@@ -25,8 +45,8 @@ flut() {
     ["󰆴 Clean"]="flutter clean"
     ["󰐕 Build APK"]="flutter build apk --release"
     ["󰐕 Build APK (split per ABI)"]="flutter build apk --release --split-per-abi"
-    ["󰐕 Build Release (split APKs + Play bundle)"]="build_release"
-    ["󰐕 Build AppBundle"]="flutter build appbundle --release"
+    ["󰐕 Build Release (split APKs + App Bundle)"]="build_release"
+    ["󰐕 Build App Bundle"]="flutter build appbundle --release"
     ["󰖟 Build Web (auto renderer)"]="flutter build web --release"
     ["󰖟 Build Web (html)"]="flutter build web --release --web-renderer html"
     ["󰖟 Build Web (canvaskit)"]="flutter build web --release --web-renderer canvaskit"
@@ -48,8 +68,8 @@ flut() {
     "${red}󰆴${reset} ${purple}Clean${reset}"
     "${green}󰐕${reset} ${purple}Build APK${reset}"
     "${green}󰐕${reset} ${purple}Build APK (split per ABI)${reset}"
-    "${green}󰐕${reset} ${purple}Build Release (split APKs + Play bundle)${reset}"
-    "${green}󰐕${reset} ${purple}Build AppBundle${reset}"
+    "${green}󰐕${reset} ${purple}Build Release (split APKs + App Bundle)${reset}"
+    "${green}󰐕${reset} ${purple}Build App Bundle${reset}"
     "${green}󰖟${reset} ${purple}Build Web (auto renderer)${reset}"
     "${green}󰖟${reset} ${purple}Build Web (html)${reset}"
     "${green}󰖟${reset} ${purple}Build Web (canvaskit)${reset}"
@@ -67,9 +87,31 @@ flut() {
   choice=$(printf "%s\n" "${menu[@]}" | fzf --no-preview --ansi --height=20 --border --prompt "Flutter › ")
   plain_choice=$(print -r -- "$choice" | sed $'s/\x1B\\[[0-9;]*[A-Za-z]//g')
 
-  if [[ -n $plain_choice ]]; then
-    eval "${commands[$plain_choice]}"
+  [[ -n $plain_choice ]] || return 0
+
+  local cmd="${commands[$plain_choice]}"
+
+  if [[ -z $cmd ]]; then
+    print -u2 "flut: no command is mapped to '$plain_choice'"
+    return 1
   fi
+
+  # Builds and runs have to start at the project root, or `flutter` cannot find
+  # pubspec.yaml and the step fails before doing anything.
+  case "$cmd" in
+    build_release|'flutter build'*|'flutter pub get'|'flutter clean'|'flutter run'*)
+      _flut_enter_project || return 1
+      ;;
+  esac
+
+  eval "$cmd"
+  local status=$?
+
+  if (( status != 0 )); then
+    print -u2 "flut: command exited with status $status"
+  fi
+
+  return $status
 }
 
 update_sdk() {
@@ -77,11 +119,26 @@ update_sdk() {
 }
 
 # Both release artifacts in one pass: the per-ABI APKs for sideloading onto a phone,
-# and the app bundle the Play Console takes. The bundle only runs if the APKs built,
+# and the App Bundle the Play Console takes. The bundle only runs if the APKs built,
 # so a failure reports itself instead of being buried under a second build.
 build_release() {
-  flutter build apk --release --split-per-abi || return 1
-  flutter build appbundle --release
+  _flut_enter_project || return 1
+
+  echo "▶ Building split APKs (release)..."
+  if ! flutter build apk --release --split-per-abi; then
+    echo "❌ Split APK build failed - skipping the App Bundle." >&2
+    return 1
+  fi
+
+  echo "▶ Building App Bundle (release)..."
+  if ! flutter build appbundle --release; then
+    echo "❌ App Bundle build failed." >&2
+    return 1
+  fi
+
+  echo "✅ Release artifacts:"
+  ls -1 build/app/outputs/flutter-apk/app-*-release.apk 2>/dev/null
+  ls -1 build/app/outputs/bundle/release/*.aab 2>/dev/null
 }
 
 create_project() {
