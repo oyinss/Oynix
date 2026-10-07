@@ -1,0 +1,10 @@
+[Unit]
+Description=App tray shortcuts (T3 Code, Hermes, Zen Browser, ZCode)
+
+[Service]
+ExecStart=%h/.local/bin/app-tray-shortcuts
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
