@@ -11,4 +11,10 @@ hl.on("hyprland.start", function ()
     -- it there, so restart it afterwards to give kdeconnectd WAYLAND_DISPLAY —
     -- without that its clipboard plugin cannot talk to the compositor.
     hl.exec_cmd("sleep 2 && systemctl --user restart kdeconnectd.service")
+
+    -- Elephant starts at default.target before the compositor. Import the
+    -- display explicitly and restart it so apps launched from search inherit
+    -- the live session rather than silently exiting without a display.
+    -- Walker is bound to Elephant, so restart both together.
+    hl.exec_cmd("sleep 2 && systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user restart elephant.service walker.service")
 end)
