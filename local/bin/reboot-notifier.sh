@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Reboot notifier for Hyprland (root-free).
-# Notifies once per boot when an installed kernel is newer than the running one,
-# or when the systemd /var/run/reboot-required flag is present.
+# Notifies once per reason when a kernel update, NVIDIA driver mismatch,
+# or /var/run/reboot-required flag requires a restart.
 
 run_path="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 marker="$run_path/reboot-notifier.done"
@@ -36,6 +36,17 @@ reboot_needed() {
             return 0
         fi
     done
+    # DKMS updates replace the on-disk driver while the old module stays loaded.
+    # Only compare when NVIDIA is loaded and the current kernel's module exists;
+    # absent NVIDIA hardware or a failed module lookup must not produce an alert.
+    if [[ -r /sys/module/nvidia/version ]] && command -v modinfo >/dev/null 2>&1; then
+        running="$(cat /sys/module/nvidia/version)"
+        installed="$(modinfo -k "$(uname -r)" -F version nvidia 2>/dev/null || true)"
+        if [[ -n "$running" && -n "$installed" && "$installed" != "$running" ]]; then
+            echo "nvidia|nvidia|${installed}|${running}"
+            return 0
+        fi
+    fi
     return 1
 }
 
@@ -45,6 +56,9 @@ body="The system needs to restart to finish applying updates."
 if [[ "$reason" == kernel\|* ]]; then
     IFS='|' read -r _ pkg installed running <<< "$reason" || true
     body="A newer kernel ($pkg $installed) is installed. Restart to boot into it (running $running)."
+elif [[ "$reason" == nvidia\|* ]]; then
+    IFS='|' read -r _ pkg installed running <<< "$reason" || true
+    body="The NVIDIA driver was updated to $installed, but $running is still loaded. Restart to finish applying the graphics driver update."
 fi
 
 if [[ -n "$reason" ]]; then
