@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# Codex account manager for the Quickshell AgentsBar.
+#
+# One place to pick a Codex login method: ChatGPT sign-in (the default, and the
+# only mode the usage panel can read) or an OpenAI API key. Both paths back up
+# ~/.codex/auth.json first, so switching is reversible.
+#
+# Usage: codex-account
+set -uo pipefail
+
+codex_bin="$(command -v codex || true)"
+if [[ -z "$codex_bin" ]]; then
+    printf 'codex CLI not found on PATH.\n' >&2
+    read -r -p 'Press Enter to close...' _ || true
+    exit 1
+fi
+
+auth_file="$HOME/.codex/auth.json"
+
+backup_auth() {
+    [[ -f "$auth_file" ]] || return 0
+    local dest="$auth_file.bak-$(date +%Y%m%d%H%M%S)"
+    if cp -p "$auth_file" "$dest" 2>/dev/null; then
+        printf 'Saved a copy: %s\n' "$dest"
+    fi
+}
+
+status_line() {
+    "$codex_bin" login status 2>&1 | head -n 1
+}
+
+pause() { read -r -p 'Press Enter to continue...' _ || true; }
+
+while true; do
+    clear 2>/dev/null || true
+    printf 'Codex account\n'
+    printf '=============\n'
+    printf 'Current: %s\n\n' "$(status_line)"
+    printf '1) Sign in with ChatGPT\n'
+    printf '2) Set up with an OpenAI API key\n'
+    printf '3) Refresh login status\n'
+    printf 'q) Quit\n\n'
+    printf 'The usage panel reads the ChatGPT sign-in. Choosing the API key switches\n'
+    printf 'Codex to API-key mode; option 1 signs back in with ChatGPT.\n\n'
+
+    read -r -p 'Choose: ' choice || exit 0
+    case "$choice" in
+        1)
+            backup_auth
+            "$codex_bin" login
+            echo
+            pause
+            ;;
+        2)
+            read -r -s -p 'Paste OpenAI API key: ' key || key=""
+            echo
+            if [[ -z "$key" ]]; then
+                printf 'No key entered.\n'
+                sleep 1
+                continue
+            fi
+            backup_auth
+            printf '%s' "$key" | "$codex_bin" login --with-api-key
+            unset key
+            echo
+            pause
+            ;;
+        3)
+            "$codex_bin" login status
+            echo
+            pause
+            ;;
+        q|Q|'')
+            exit 0
+            ;;
+        *) ;;
+    esac
+done
