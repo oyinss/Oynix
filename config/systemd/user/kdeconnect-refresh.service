@@ -1,0 +1,19 @@
+[Unit]
+Description=KDE Connect: re-search for devices when none are reachable
+Documentation=man:kdeconnect-cli(1)
+# Ordered after the daemon for the normal case; the condition below is what actually guards it,
+# because it also stops this unit from D-Bus activating kdeconnectd before the session exists.
+After=kdeconnectd.service
+
+[Service]
+Type=oneshot
+
+# Only run while the daemon is up. A refresh at boot would D-Bus activate kdeconnectd with no
+# Wayland display, which aborts and dumps core (see config/systemd/user/kdeconnectd.service).
+ExecCondition=/usr/bin/pgrep -x kdeconnectd
+
+# kdeconnectd only builds a link when a device announces itself, so a phone that was asleep or
+# off the network stays invisible until its next announcement -- hours, in practice, which is
+# why the phone "does not connect automatically". Ask it to search again on a timer instead, but
+# only while nothing is reachable: a healthy connection is left alone and the journal stays quiet.
+ExecStart=/bin/sh -c 'kdeconnect-cli --list-available --id-only 2>/dev/null | grep -qE "^[0-9a-f]{8}_" || exec kdeconnect-cli --refresh'

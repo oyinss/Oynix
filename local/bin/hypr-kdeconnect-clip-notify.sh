@@ -27,6 +27,23 @@
 
 set -u
 
+# This service is wanted by default.target, so it starts before Hyprland has imported
+# WAYLAND_DISPLAY into the systemd user manager: wl-paste then falls back to wayland-0, which does
+# not exist (the session uses wayland-1), the watch exits 1, and systemd restarts it forever --
+# seen as "restart counter is at N" with no notifications ever firing. Resolve the session's own
+# socket instead of trusting the environment. `wl-paste --list-types` is the cheapest way to tell
+# a live socket from a stale one left behind by an earlier session.
+if [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    for sock in "$runtime"/wayland-*; do
+        [ -S "$sock" ] || continue
+        if WAYLAND_DISPLAY="${sock##*/}" wl-paste --list-types >/dev/null 2>&1; then
+            export WAYLAND_DISPLAY="${sock##*/}"
+            break
+        fi
+    done
+fi
+
 RUN_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/hypr-kdeconnect-clip-notify"
 
 mkdir -p "$RUN_DIR"
@@ -58,12 +75,14 @@ now_ms() { date +%s%3N; }
 # Output: the phone-IP connection's "lastrcv:<n>" field, or "-1" if none.
 kde_last_rcv_ms() {
     # ss prints one connection line, then an indented metrics line. We want the
-    # metrics (lastrcv) for the ESTABLISHED socket connecting to the KDE Connect
-    # remote port 1716. We do NOT require "kdeconnectd" on the conn line: the
-    # users() field is only present when ss has the needed privileges, and the
-    # remote :1716 endpoint is specific enough.
+    # metrics (lastrcv) for the ESTABLISHED socket carrying KDE Connect traffic.
+    # Port 1716 may be on EITHER side: the desktop usually dials the phone, but the
+    # daemon also accepts links the phone opens, and that line ends with the phone's
+    # ephemeral port instead. Anchoring on ":1716$" therefore matched only one of the
+    # two and silently stopped notifying whenever the phone was the one that connected.
+    # Matching the port as a word covers both, with or without an ss -p users(...) tail.
     ss -tni 2>/dev/null | awk '
-        /^ESTAB/ { have_kde=($0 ~ /:1716$/) }
+        /^ESTAB/ { have_kde=($0 ~ /:1716([[:space:]]|$)/) }
         /^[[:space:]]/ && have_kde {
             for (i=1; i<=NF; i++) if ($i ~ /^lastrcv:/) {
                 v=$i; sub(/^lastrcv:/,"",v); print v; exit
