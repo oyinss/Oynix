@@ -3,9 +3,11 @@
 # phone:
 #
 #   - links  -> "Link shared from phone" (+ browser focus)
-#   - files  -> "File received from phone" with the full path as body,
-#               "Copy path" / "Open" action buttons, and an image thumbnail
-#               for images
+#   - files  -> "File received and copied" with the full path as body,
+#               "Copy path" / "Open" action buttons, an image thumbnail for
+#               images, and the file itself on the clipboard so it can be
+#               pasted: image/* as image/png, anything else as a text/uri-list
+#               file reference (what chat apps and file dialogs read on paste).
 #
 # KDE Connect's Share plugin exposes one DBus signal for both:
 # org.kde.kdeconnect.device.share.shareReceived(url). For file transfers the
@@ -20,6 +22,22 @@
 # Requires: gdbus (glib2), notify-send (libnotify), a paired+reachable phone.
 
 set -u
+
+# This service is wanted by default.target, so it starts before Hyprland has imported
+# WAYLAND_DISPLAY into the systemd user manager; wl-copy then falls back to wayland-0, which does
+# not exist (the session uses wayland-1), so every clipboard copy silently fails. Resolve the
+# session's own socket instead of trusting the environment. `wl-paste --list-types` is the
+# cheapest way to tell a live socket from a stale one left behind by an earlier session.
+if [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    for sock in "$runtime"/wayland-*; do
+        [ -S "$sock" ] || continue
+        if WAYLAND_DISPLAY="${sock##*/}" wl-paste --list-types >/dev/null 2>&1; then
+            export WAYLAND_DISPLAY="${sock##*/}"
+            break
+        fi
+    done
+fi
 
 RUN_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/hypr-kdeconnect-share-notify"
 mkdir -p "$RUN_DIR"
@@ -102,6 +120,18 @@ copy_image_to_clipboard() {
     fi
 }
 
+# Put a received file on the clipboard as a text/uri-list, the flavour file managers and chat
+# apps read when you paste a file. Paths must be percent-encoded: received names routinely
+# contain spaces, '&', brackets and parentheses.
+copy_file_to_clipboard() {
+    local path="$1" unit uri
+    uri="$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "$path" 2>/dev/null)" || return 0
+    [ -n "$uri" ] || return 0
+    unit="kdeconnect-file-clipboard-$(date +%s%N)"
+    systemd-run --user --quiet --collect --unit="$unit" \
+        bash -c 'printf "file://%s\n" "$1" | wl-copy --foreground --type text/uri-list' _ "$uri"
+}
+
 notify_file() {
     local url="$1" path icon mime action summary
     # QUrl::toString() keeps paths mostly decoded; unquote any leftover %XX.
@@ -117,6 +147,13 @@ notify_file() {
                 icon="$path"
                 summary="Image received and copied"
                 copy_image_to_clipboard "$path" "$mime"
+            fi
+            ;;
+        *)
+            # Anything that is not an image still goes on the clipboard, as a file reference,
+            # so it can be pasted into a chat or a file dialog the way a received image can.
+            if [ -f "$path" ] && copy_file_to_clipboard "$path"; then
+                summary="File received and copied"
             fi
             ;;
     esac

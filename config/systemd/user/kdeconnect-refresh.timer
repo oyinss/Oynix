@@ -1,0 +1,14 @@
+[Unit]
+Description=KDE Connect reachability keeper
+
+[Timer]
+# First check shortly after login, then every minute. A minute is the worst case for noticing a
+# phone that just woke up; the check itself is one UDP broadcast plus a connect attempt, so it is
+# far cheaper than the alternative (waiting for the phone's next unsolicited announcement).
+OnBootSec=30s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Unit=kdeconnect-refresh.service
+
+[Install]
+WantedBy=timers.target
