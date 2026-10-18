@@ -1,5 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Widgets
+import Qt5Compat.GraphicalEffects
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -12,9 +15,6 @@ MouseArea {
     readonly property color usageColor: AgentsBar.warning
         ? Appearance.m3colors.m3error
         : Appearance.colors.colOnLayer1
-    readonly property color iconBackground: AgentsBar.warning
-        ? Appearance.m3colors.m3error
-        : Appearance.colors.colPrimary
 
     implicitWidth: content.implicitWidth
     implicitHeight: content.implicitHeight
@@ -32,18 +32,23 @@ MouseArea {
         anchors.centerIn: parent
         spacing: 3
 
-        Rectangle {
-            implicitWidth: 24
-            implicitHeight: 24
-            radius: Appearance.rounding.full
-            color: root.iconBackground
+        Item {
+            implicitWidth: 18
+            implicitHeight: 18
             opacity: AgentsBar.available ? 1 : 0.6
 
-            MaterialSymbol {
-                anchors.centerIn: parent
-                text: "data_usage"
-                iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.colors.colOnPrimary
+            IconImage {
+                id: providerIcon
+                anchors.fill: parent
+                source: Qt.resolvedUrl(`${Quickshell.shellPath("assets/icons/agentsbar")}/${AgentsBar.selectedAsset}`)
+                implicitSize: 18
+                smooth: true
+            }
+
+            ColorOverlay {
+                anchors.fill: providerIcon
+                source: providerIcon
+                color: root.usageColor
             }
         }
 

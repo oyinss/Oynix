@@ -59,6 +59,35 @@ def http_get(url: str, headers: dict[str, str]) -> tuple[int, str]:
         return -1, f"{type(error).__name__}: {error}"
 
 
+def api_error_message(body: str, fallback: str) -> str:
+    """Surface the provider's own error text when it supplies one.
+
+    A 401/403 is not always a bad key: it can be an expired key or a missing
+    entitlement, and these APIs say which in `error.message`. Reporting the raw
+    message keeps the bar honest instead of collapsing everything to one line.
+    """
+    try:
+        payload = json.loads(body)
+    except Exception:
+        return fallback
+    if not isinstance(payload, dict):
+        return fallback
+    error = payload.get("error")
+    if isinstance(error, dict):
+        message = error.get("message")
+        if message:
+            return str(message).strip()
+        code = error.get("code") or error.get("type")
+        if code:
+            return f"{fallback} ({code})"
+    elif isinstance(error, str) and error.strip():
+        return error.strip()
+    message = payload.get("message")
+    if isinstance(message, str) and message.strip():
+        return message.strip()
+    return fallback
+
+
 def window_label(seconds: int | float | None) -> str:
     if not seconds:
         return "Window"
@@ -106,7 +135,11 @@ def fetch_codex() -> dict:
     tokens = auth.get("tokens") or {}
     token = tokens.get("access_token")
     if not token:
-        entry["error"] = "no ChatGPT access token; run `codex login`"
+        auth_mode = str(auth.get("auth_mode") or "").lower()
+        if auth.get("OPENAI_API_KEY") or auth_mode in ("apikey", "api_key", "api-key"):
+            entry["error"] = "signed in with an API key; ChatGPT usage needs `codex login`"
+        else:
+            entry["error"] = "no ChatGPT access token; run `codex login`"
         return entry
 
     headers = {
@@ -346,8 +379,62 @@ def codex_local_windows(now: float | None = None) -> list[dict]:
 
 # ---------------------------------------------------------------------- opencode-go
 
+# OpenCode V2 keeps credentials in its own database, not in auth.json: re-adding an
+# account creates a new labelled connection ("OpenCode Go 2", "OpenCode Go 3", ...)
+# and the old auth.json key goes stale. `opencode auth export` is the CLI's own view
+# of every stored credential plus which one is active, so ask it first. This covers
+# both the opencode-go and the plain deepseek integrations.
+_OPENCODE_EXPORT: list | None = None
+_OPENCODE_ACTIVE: dict[str, dict] = {}
+
+
+def opencode_cli_path() -> str:
+    return shutil.which("opencode") or str(HOME / ".opencode" / "bin" / "opencode")
+
+
+def opencode_credentials() -> list:
+    global _OPENCODE_EXPORT
+    if _OPENCODE_EXPORT is not None:
+        return _OPENCODE_EXPORT
+    _OPENCODE_EXPORT = []
+    cli = opencode_cli_path()
+    if os.access(cli, os.X_OK):
+        try:
+            result = subprocess.run([cli, "auth", "export"], capture_output=True, text=True, timeout=15)
+            if result.returncode == 0 and result.stdout.strip():
+                data = json.loads(result.stdout)
+                if isinstance(data, list):
+                    _OPENCODE_EXPORT = data
+        except Exception:
+            pass
+    return _OPENCODE_EXPORT
+
+
+def opencode_active_credential(integration_id: str) -> dict | None:
+    """Return {"key", "label"} for the active credential of an integration, or None."""
+    if integration_id in _OPENCODE_ACTIVE:
+        return _OPENCODE_ACTIVE[integration_id] or None
+    _OPENCODE_ACTIVE[integration_id] = {}
+    for credential in opencode_credentials():
+        if credential.get("integrationID") != integration_id:
+            continue
+        if not credential.get("active"):
+            continue
+        key = (credential.get("value") or {}).get("key")
+        if key:
+            _OPENCODE_ACTIVE[integration_id] = {
+                "key": key,
+                "label": credential.get("label") or integration_id,
+            }
+            break
+    return _OPENCODE_ACTIVE[integration_id] or None
+
 
 def opencode_go_source() -> str:
+    active = opencode_active_credential("opencode-go")
+    if active:
+        return f"OpenCode CLI → opencode auth export ({active['label']}, active)"
+
     native_path = HOME / ".local" / "share" / "opencode" / "auth.json"
     try:
         auth = json.loads(native_path.read_text())
@@ -369,6 +456,10 @@ def opencode_go_source() -> str:
 
 
 def opencode_go_key() -> str:
+    active = opencode_active_credential("opencode-go")
+    if active:
+        return active["key"]
+
     native_path = HOME / ".local" / "share" / "opencode" / "auth.json"
     try:
         auth = json.loads(native_path.read_text())
@@ -408,7 +499,7 @@ def fetch_opencode_go() -> dict:
     }
     key = opencode_go_key()
     if not key:
-        entry["error"] = "no API key (~/.config/ai-agents/credentials/opencode-go.key)"
+        entry["error"] = "no API key (~/.local/share/opencode/auth.json → opencode-go)"
         return entry
 
     status, body = http_get(
@@ -416,7 +507,7 @@ def fetch_opencode_go() -> dict:
         {"Authorization": f"Bearer {key}", "Accept": "application/json", "User-Agent": USER_AGENT},
     )
     if status in (401, 403):
-        entry["error"] = "API key rejected"
+        entry["error"] = api_error_message(body, "API key rejected")
         return entry
     if status != 200:
         entry["error"] = f"API error {status}"
@@ -468,6 +559,29 @@ def fetch_opencode_go() -> dict:
 # ------------------------------------------------------------------------ deepseek
 
 
+def deepseek_source() -> str:
+    active = opencode_active_credential("deepseek")
+    if active:
+        return f"OpenCode CLI → opencode auth export ({active['label']}, active)"
+    key_path = HOME / ".config" / "codexbar" / "deepseek-api-key"
+    try:
+        display_path = "~/" + str(key_path.relative_to(HOME))
+    except ValueError:
+        display_path = str(key_path)
+    return f"codexbar key file → {display_path}"
+
+
+def deepseek_key() -> str:
+    """OpenCode's active deepseek credential first, then the legacy codexbar file."""
+    active = opencode_active_credential("deepseek")
+    if active:
+        return active["key"]
+    try:
+        return (HOME / ".config" / "codexbar" / "deepseek-api-key").read_text().strip()
+    except OSError:
+        return ""
+
+
 def deepseek_local_extras() -> list[dict]:
     db_path = HOME / ".local" / "share" / "opencode" / "opencode.db"
     if not db_path.exists():
@@ -501,6 +615,7 @@ def fetch_deepseek() -> dict:
         "id": "deepseek",
         "label": "DeepSeek",
         "icon": "deepseek-symbolic",
+        "source": deepseek_source(),
         "plan": "API",
         "primary": None,
         "warning": False,
@@ -509,16 +624,7 @@ def fetch_deepseek() -> dict:
         "notes": [],
         "error": "",
     }
-    key_path = HOME / ".config" / "codexbar" / "deepseek-api-key"
-    if not key_path.exists():
-        entry["error"] = "no DeepSeek API key"
-        return entry
-
-    try:
-        key = key_path.read_text().strip()
-    except OSError:
-        entry["error"] = "DeepSeek API key could not be read"
-        return entry
+    key = deepseek_key()
     if not key:
         entry["error"] = "no DeepSeek API key"
         return entry
@@ -528,7 +634,7 @@ def fetch_deepseek() -> dict:
         {"Authorization": f"Bearer {key}", "Accept": "application/json", "User-Agent": USER_AGENT},
     )
     if status in (401, 403):
-        entry["error"] = "DeepSeek API key rejected"
+        entry["error"] = api_error_message(body, "DeepSeek API key rejected")
         return entry
     if status != 200:
         entry["error"] = f"DeepSeek API error {status}"

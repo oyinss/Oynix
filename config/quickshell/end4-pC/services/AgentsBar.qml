@@ -25,10 +25,32 @@ Singleton {
     property var providerPrimaries: ({})
     property var providerSources: ({})
     property list<var> providerRows: []
+    property double lastUpdated: 0
 
     readonly property int displayPercent: Number(root.providerPrimaries[root.selectedProvider] ?? -1)
     readonly property bool warning: displayPercent >= 80
     readonly property string displayText: displayPercent >= 0 ? `${displayPercent}%` : "--"
+    readonly property var providerAssets: ({
+        "codex": "codex.svg",
+        "opencode-go": "opencodego.svg",
+        "deepseek": "deepseek.svg"
+    })
+    readonly property string selectedAsset: root.providerAssets[root.selectedProvider] ?? "opencodego.svg"
+
+    function updatedDescription() {
+        if (root.loading)
+            return "Refreshing…"
+        if (root.lastUpdated <= 0)
+            return "Not updated yet"
+        const seconds = Math.max(0, Math.floor(Date.now() / 1000 - root.lastUpdated))
+        if (seconds < 60)
+            return "Updated just now"
+        if (seconds < 3600)
+            return `Updated ${Math.floor(seconds / 60)}m ago`
+        if (seconds < 86400)
+            return `Updated ${Math.floor(seconds / 3600)}h ago`
+        return `Updated ${Math.floor(seconds / 86400)}d ago`
+    }
 
     function providerLabel(id) {
         switch (id) {
@@ -71,6 +93,7 @@ Singleton {
         const providers = Array.isArray(snapshot.providers) ? snapshot.providers : []
         if (providers.length === 0)
             throw new Error("agents-usage returned no providers")
+        root.lastUpdated = Number(snapshot.updated) || (Date.now() / 1000)
 
         providers.forEach(provider => {
             const label = root.providerLabel(provider.id)

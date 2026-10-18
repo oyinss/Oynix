@@ -22,11 +22,25 @@ LazyLoader {
     readonly property var selectedRows: AgentsBar.providerRows.filter(row => row.providerId === root.selectedProvider)
     signal requestClose()
 
-    function openOpenCodeAccountManager() {
+    readonly property var accountManagerProviders: ["codex", "opencode-go", "deepseek"]
+    readonly property bool hasAccountManager: root.accountManagerProviders.indexOf(root.selectedProvider) !== -1
+    readonly property string accountManagerLabel: ({
+        "codex": "Manage Codex account",
+        "deepseek": "Manage DeepSeek account",
+        "opencode-go": "Manage OpenCode account"
+    })[root.selectedProvider] ?? "Manage account"
+
+    function openAccountManager() {
+        if (!root.hasAccountManager)
+            return
+        const home = Quickshell.env("HOME")
+        const command = root.selectedProvider === "codex"
+            ? `"${home}/.local/bin/codex-account"`
+            : `"${home}/.opencode/bin/opencode" auth login ${root.selectedProvider}`
         Quickshell.execDetached([
             "bash",
             "-lc",
-            `${Config.options.apps.terminal} -e ${Quickshell.env("HOME")}/.opencode/bin/opencode providers login`
+            `${Config.options.apps.terminal} -e ${command}`
         ])
     }
 
@@ -183,7 +197,7 @@ LazyLoader {
                         }
 
                         StyledText {
-                            text: AgentsBar.loading ? "Refreshing…" : "Updated just now"
+                            text: AgentsBar.updatedDescription()
                             color: Appearance.colors.colSubtext
                             font.pixelSize: Appearance.font.pixelSize.normal
                         }
@@ -207,14 +221,14 @@ LazyLoader {
                 }
 
                 RippleButton {
-                    visible: root.selectedProvider === "opencode-go"
+                    visible: root.hasAccountManager
                     Layout.fillWidth: true
                     implicitHeight: 38
                     buttonRadius: Appearance.rounding.normal
                     colBackground: "transparent"
                     colBackgroundHover: Appearance.colors.colLayer2
                     colRipple: Appearance.colors.colPrimaryContainerActive
-                    downAction: () => root.openOpenCodeAccountManager()
+                    downAction: () => root.openAccountManager()
 
                     contentItem: RowLayout {
                         anchors.fill: parent
@@ -228,7 +242,7 @@ LazyLoader {
 
                         StyledText {
                             Layout.fillWidth: true
-                            text: "Manage OpenCode account"
+                            text: root.accountManagerLabel
                             font.pixelSize: Appearance.font.pixelSize.normal
                         }
 
@@ -288,11 +302,15 @@ LazyLoader {
                                 Layout.fillWidth: true
                                 text: (modelData.value ?? "").length > 0
                                     ? modelData.value
-                                    : (modelData.percent >= 0 ? `${modelData.percent}% used` : "Usage unavailable")
+                                    : (modelData.percent >= 0
+                                        ? `${modelData.percent}% used`
+                                        : ((modelData.reset ?? "").length > 0 ? modelData.reset : "Usage unavailable"))
                                 font.pixelSize: Appearance.font.pixelSize.normal
+                                elide: Text.ElideRight
                             }
 
                             StyledText {
+                                visible: modelData.percent >= 0 && (modelData.reset ?? "").length > 0
                                 text: modelData.reset
                                 color: Appearance.colors.colSubtext
                                 font.pixelSize: Appearance.font.pixelSize.normal
