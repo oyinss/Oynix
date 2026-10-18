@@ -6,23 +6,23 @@
 # split-APK step would fail, `build_release` would return before the bundle, and
 # the menu closed with no bundle and no obvious reason. This makes the failure a
 # sentence instead.
-_flut_enter_project() {
+_flu_enter_project() {
   local dir="$PWD"
   while [[ "$dir" != "/" && ! -f "$dir/pubspec.yaml" ]]; do
     dir="${dir:h}"
   done
 
   if [[ ! -f "$dir/pubspec.yaml" ]]; then
-    print -u2 "flut: no pubspec.yaml in $PWD or any parent - run this from a Flutter project."
+    print -u2 "flu: no pubspec.yaml in $PWD or any parent - run this from a Flutter project."
     return 1
   fi
 
   cd "$dir" || return 1
 }
 
-flut() {
-  # Anything after `flut` goes straight through, so a one-off build does not mean
-  # leaving the menu behind. Bare `flut` still opens it.
+flu() {
+  # Anything after `flu` goes straight through, so a one-off build does not mean
+  # leaving the menu behind. Bare `flu` still opens it.
   if (( $# > 0 )); then
     flutter "$@"
     return
@@ -92,7 +92,7 @@ flut() {
   local cmd="${commands[$plain_choice]}"
 
   if [[ -z $cmd ]]; then
-    print -u2 "flut: no command is mapped to '$plain_choice'"
+    print -u2 "flu: no command is mapped to '$plain_choice'"
     return 1
   fi
 
@@ -100,7 +100,7 @@ flut() {
   # pubspec.yaml and the step fails before doing anything.
   case "$cmd" in
     build_release|'flutter build'*|'flutter pub get'|'flutter clean'|'flutter run'*)
-      _flut_enter_project || return 1
+      _flu_enter_project || return 1
       ;;
   esac
 
@@ -108,7 +108,7 @@ flut() {
   local status=$?
 
   if (( status != 0 )); then
-    print -u2 "flut: command exited with status $status"
+    print -u2 "flu: command exited with status $status"
   fi
 
   return $status
@@ -122,7 +122,7 @@ update_sdk() {
 # and the App Bundle the Play Console takes. The bundle only runs if the APKs built,
 # so a failure reports itself instead of being buried under a second build.
 build_release() {
-  _flut_enter_project || return 1
+  _flu_enter_project || return 1
 
   echo "▶ Building split APKs (release)..."
   if ! flutter build apk --release --split-per-abi; then
