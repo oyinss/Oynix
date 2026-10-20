@@ -247,15 +247,16 @@ Scope { // Scope
                     if (event.key === Qt.Key_Escape) {
                         panelWindow.hide();
                     }
+                    // Ctrl+O is deliberately unbound: a focused editor must keep it (nano's
+                    // write-out). Only pin and detach are consumed while the sidebar has focus.
                     if (event.modifiers === Qt.ControlModifier) {
-                        if (event.key === Qt.Key_O) {
-                            panelWindow.extend = !panelWindow.extend;
-                        } else if (event.key === Qt.Key_D) {
+                        if (event.key === Qt.Key_D) {
                             root.toggleDetach();
+                            event.accepted = true;
                         } else if (event.key === Qt.Key_P) {
                             root.togglePin();
+                            event.accepted = true;
                         }
-                        event.accepted = true;
                     }
                 }
             }
