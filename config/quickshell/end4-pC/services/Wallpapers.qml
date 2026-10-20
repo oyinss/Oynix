@@ -409,12 +409,21 @@ Singleton {
     // Thumbnail generation
     function generateThumbnail(size: string) {
         if (!["normal", "large", "x-large", "xx-large"].includes(size)) throw new Error("Invalid thumbnail size");
-        thumbgenProc.directory = root.directory
-        thumbgenProc.running = false
+        const directory = FileUtils.trimFileProtocol(root.directory);
+        // `updateThumbnails` runs on every layout pass, and each one used to set running=false and
+        // then true: the generator was killed and restarted before it finished, so a size with a
+        // cold cache never filled and most tiles stayed blank. Reuse the running job unless the
+        // requested size or directory actually changed.
+        if (thumbgenProc.running && thumbgenProc.thumbnailSize === size && thumbgenProc.directory === directory)
+            return;
+        thumbgenProc.directory = directory;
+        thumbgenProc.thumbnailSize = size;
+        thumbgenProc.running = false;
         thumbgenProc.command = [
             "bash", "-c",
-            `${thumbgenScriptPath} --size ${size} --machine_progress -d ${FileUtils.trimFileProtocol(root.directory)} || ${generateThumbnailsMagickScriptPath} --size ${size} -d ${FileUtils.trimFileProtocol(root.directory)}`,
-        ]
+            // -w builds the cache in parallel; the magick fallback stays sequential.
+            `${thumbgenScriptPath} --size ${size} -w 4 --machine_progress -d ${directory} || ${generateThumbnailsMagickScriptPath} --size ${size} -d ${directory}`,
+        ];
         // console.log("[Wallpapers] Updating thumbnails with command ", thumbgenProc.command.join(" "))
         root.thumbnailGenerationProgress = 0
         thumbgenProc.running = true
@@ -422,6 +431,7 @@ Singleton {
     Process {
         id: thumbgenProc
         property string directory
+        property string thumbnailSize
         stdout: SplitParser {
             onRead: data => {
                 // print("thumb gen proc:", data)
