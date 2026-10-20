@@ -1,0 +1,10 @@
+[Unit]
+Description=Reconnect previously connected Bluetooth mice after resume
+
+[Service]
+ExecStart=%h/.local/bin/bluetooth-mouse-resume
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

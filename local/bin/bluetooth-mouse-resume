@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""Retry trusted mice that were connected before suspend, without resetting Bluetooth."""
+
+import logging
+import sys
+
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
+
+DEVICE = "org.bluez.Device1"
+PROPERTIES = "org.freedesktop.DBus.Properties"
+RETRY_DELAYS = (3, 8, 18, 35, 60)
+
+
+class MouseResume:
+    def __init__(self, bus):
+        self.bus = bus
+        self.targets = set()
+        self.pending = set()
+        self.timers = []
+        self.generation = 0
+
+    def mice(self):
+        manager = dbus.Interface(self.bus.get_object("org.bluez", "/"),
+                                 "org.freedesktop.DBus.ObjectManager")
+        objects = manager.GetManagedObjects(timeout=5)
+        return {
+            str(path): interfaces[DEVICE]
+            for path, interfaces in objects.items()
+            if DEVICE in interfaces
+            and interfaces[DEVICE].get("Icon") == "input-mouse"
+            and interfaces[DEVICE].get("Paired")
+            and interfaces[DEVICE].get("Trusted")
+            and not interfaces[DEVICE].get("Blocked")
+        }
+
+    def prepare_for_sleep(self, sleeping):
+        self.generation += 1
+        for timer in self.timers:
+            GLib.source_remove(timer)
+        self.timers.clear()
+        self.pending.clear()
+        if sleeping:
+            self.targets.clear()
+            try:
+                self.targets = {path for path, props in self.mice().items()
+                                if props.get("Connected")}
+                logging.info("Remembered %d connected mouse(s) before sleep", len(self.targets))
+            except dbus.DBusException as error:
+                logging.warning("Cannot read mice before sleep: %s", error)
+        elif self.targets:
+            for delay in RETRY_DELAYS:
+                self.timers.append(GLib.timeout_add_seconds(delay, self.retry))
+            logging.info("Scheduled mouse reconnection after resume")
+
+    def retry(self):
+        # Remove the current source from bookkeeping before GLib destroys it.
+        current = GLib.main_current_source().get_id()
+        self.timers = [timer for timer in self.timers if timer != current]
+        try:
+            mice = self.mice()
+        except dbus.DBusException as error:
+            logging.warning("Bluetooth not ready: %s", error)
+            return GLib.SOURCE_REMOVE
+        for path in list(self.targets):
+            props = mice.get(path)
+            if props is None:
+                continue
+            if props.get("Connected"):
+                self.targets.discard(path)
+                continue
+            if path in self.pending:
+                continue
+            self.pending.add(path)
+            generation = self.generation
+
+            def finished(error=None, path=path, generation=generation):
+                if generation != self.generation:
+                    return
+                self.pending.discard(path)
+                if error is None:
+                    self.targets.discard(path)
+                    logging.info("Mouse reconnected: %s", path)
+                else:
+                    logging.info("Mouse reconnect attempt: %s", error)
+
+            try:
+                device = dbus.Interface(self.bus.get_object("org.bluez", path), DEVICE)
+                device.Connect(reply_handler=finished, error_handler=finished, timeout=12)
+            except dbus.DBusException as error:
+                finished(error)
+        return GLib.SOURCE_REMOVE
+
+
+def main():
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    DBusGMainLoop(set_as_default=True)
+    bus = dbus.SystemBus()
+    recovery = MouseResume(bus)
+    if "--check" in sys.argv:
+        for props in recovery.mice().values():
+            print(f"{props.get('Alias', 'Mouse')}: connected={bool(props.get('Connected'))}")
+        return
+    bus.add_signal_receiver(recovery.prepare_for_sleep,
+                            signal_name="PrepareForSleep",
+                            dbus_interface="org.freedesktop.login1.Manager",
+                            bus_name="org.freedesktop.login1",
+                            path="/org/freedesktop/login1")
+    logging.info("Watching for suspend/resume to recover Bluetooth mice")
+    GLib.MainLoop().run()
+
+
+if __name__ == "__main__":
+    main()
