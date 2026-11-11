@@ -8,3 +8,6 @@
 config/text_expander/empty.yml
 config/text_expander/base.yml
 config/text_expander/xfiles.yml
+local/bin/pisol-otp-notify.sh
+config/systemd/user/pisol-otp-notify.service
+__pycache__/
