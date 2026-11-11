@@ -116,7 +116,12 @@ export PATH
 # -------------------------------------------------------
 # Golang
 # -------------------------------------------------------
-export GOROOT=/usr/local/go
+# Go installed via pacman lives in /usr/lib/go and detects its own root.
+# Only override GOROOT for a manual /usr/local/go toolchain; pointing it at a
+# directory that does not exist breaks every `go` invocation.
+if [[ -d /usr/local/go ]]; then
+  export GOROOT=/usr/local/go
+fi
 export GOPATH=$HOME/go
 
 # -------------------------------------------------------

@@ -3,7 +3,7 @@
 # ----------------------------
 
 # Install a package (quick)
-alias deploy="paru -S"
+alias i="paru -S"
 
 # Remove a package (quick)
 alias purge="paru -R"

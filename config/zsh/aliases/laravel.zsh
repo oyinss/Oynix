@@ -15,6 +15,10 @@ lrv() {
   local PHP_BIN="${PHP_BIN:-php83}"
   local LARAVEL_PORT="${LARAVEL_PORT:-8000}"
   local LARAVEL_HOST="${LARAVEL_HOST:-127.0.0.1}"
+  if [[ "${PHP_BIN:t}" == php83 ]] && ! "$PHP_BIN" -r 'exit(PHP_VERSION_ID >= 80336 ? 0 : 1);'; then
+    echo "ERROR: PHP 8.3.36 or newer is required; refusing to run Laravel with an outdated php83." >&2
+    return 1
+  fi
   local reset=$'\033[0m'
   local blue=$'\033[38;5;75m'
   local cyan=$'\033[38;5;80m'
