@@ -17,4 +17,11 @@ hl.on("hyprland.start", function ()
     -- the live session rather than silently exiting without a display.
     -- Walker is bound to Elephant, so restart both together.
     hl.exec_cmd("sleep 2 && systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user restart elephant.service walker.service")
+
+    -- Kitty-style "highlight, then paste": T3 Code's terminal can only read the
+    -- system clipboard (its middle-click is pane-selection only), so mirror the
+    -- Wayland PRIMARY selection into CLIPBOARD. Anything you highlight anywhere
+    -- then becomes pasteable with Ctrl+Shift+V. This intentionally makes every
+    -- highlight a clipboard entry, so cliphist records them too.
+    hl.exec_cmd("wl-paste --primary --watch wl-copy")
 end)
