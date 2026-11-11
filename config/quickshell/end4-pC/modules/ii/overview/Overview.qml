@@ -143,11 +143,15 @@ Scope {
         }
     }
 
+    // Opening a prefixed view with a chord means SUPER is still held; disarm the
+    // SUPER-release handler so letting go does not immediately toggle the same
+    // overview back off (Hyprland forwards that release even after another key).
     function toggleClipboard() {
         if (GlobalStates.overviewOpen && overviewScope.dontAutoCancelSearch) {
             GlobalStates.overviewOpen = false;
             return;
         }
+        GlobalStates.superReleaseMightTrigger = false;
         overviewScope.dontAutoCancelSearch = true;
         panelWindow.setSearchingText(Config.options.search.prefix.clipboard);
         GlobalStates.overviewOpen = true;
@@ -158,6 +162,7 @@ Scope {
             GlobalStates.overviewOpen = false;
             return;
         }
+        GlobalStates.superReleaseMightTrigger = false;
         overviewScope.dontAutoCancelSearch = true;
         panelWindow.setSearchingText(Config.options.search.prefix.emojis);
         GlobalStates.overviewOpen = true;
@@ -168,6 +173,7 @@ Scope {
             GlobalStates.overviewOpen = false;
             return;
         }
+        GlobalStates.superReleaseMightTrigger = false;
         overviewScope.dontAutoCancelSearch = true;
         panelWindow.setSearchingText(Config.options.search.prefix.symbols);
         GlobalStates.overviewOpen = true;
