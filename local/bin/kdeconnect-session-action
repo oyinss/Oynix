@@ -1,47 +1,84 @@
 #!/usr/bin/env bash
+# Session actions for remote callers (KDE Connect, SSH), written for Hyprland.
+#
+# KDE Connect's daemon lives in user@1000.service (logind's "manager" session),
+# not in the graphical session, so a bare `loginctl lock-session` there locks the
+# wrong session and nothing appears on screen. These actions talk to the shell
+# and compositor directly, and only fall back to logind afterwards.
 
 set -u
 
 action="${1:-}"
+qs_config="${QS_CONFIG:-end4-pC}"
+log_file="${XDG_STATE_HOME:-$HOME/.local/state}/kdeconnect-session-action.log"
+
+log() {
+    mkdir -p "$(dirname "$log_file")" 2>/dev/null
+    printf '%s %s: %s\n' "$(date '+%F %T')" "$action" "$*" >>"$log_file" 2>/dev/null
+}
 
 case "$action" in
     lock)
-        exec /usr/bin/loginctl lock-session
+        # The shell's own lock screen (the one hypridle's idle timer raises).
+        log "lock"
+        if /usr/bin/qs -c "$qs_config" ipc call lock activate >/dev/null 2>&1; then
+            exit 0
+        fi
+        if /usr/bin/pidof hyprlock >/dev/null 2>&1; then
+            exit 0
+        fi
+        exec /usr/bin/hyprlock --immediate
         ;;
     unlock)
-        exec /usr/bin/loginctl unlock-session
+        # The lock screen only accepts the account password at the machine.
+        log "refused unlock"
+        printf 'Unlock at the lock screen: the password is required.\n' >&2
+        exit 1
         ;;
     suspend)
+        log "suspend"
         exec /usr/bin/bash -c '/usr/bin/systemctl suspend || /usr/bin/loginctl suspend'
         ;;
     hibernate)
+        log "hibernate"
         exec /usr/bin/bash -c '/usr/bin/systemctl hibernate || /usr/bin/loginctl hibernate'
         ;;
     logout)
-        exec /usr/bin/pkill -i Hyprland
+        # Graceful compositor exit; the session ends and the greeter/autologin takes over.
+        log "logout"
+        exec /usr/bin/bash -c '
+            for d in $(ls -dt "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/hypr/*/ 2>/dev/null); do
+                s="$(basename "$d")"
+                if HYPRLAND_INSTANCE_SIGNATURE="$s" /usr/bin/hyprctl version >/dev/null 2>&1; then
+                    exec env HYPRLAND_INSTANCE_SIGNATURE="$s" /usr/bin/hyprctl dispatch exit
+                fi
+            done
+            exec /usr/bin/pkill -x Hyprland'
         ;;
     shutdown)
+        log "poweroff"
         exec /usr/bin/bash -c '/usr/bin/systemctl poweroff || /usr/bin/loginctl poweroff'
         ;;
     reboot)
-        exec /usr/bin/bash -c '/usr/bin/reboot || /usr/bin/loginctl reboot'
+        log "reboot"
+        exec /usr/bin/bash -c '/usr/bin/systemctl reboot || /usr/bin/loginctl reboot'
         ;;
     firmware)
+        log "firmware"
         exec /usr/bin/bash -c '/usr/bin/systemctl reboot --firmware-setup || /usr/bin/loginctl reboot --firmware-setup'
         ;;
     task-manager)
-        if [[ -x /usr/bin/plasma-systemmonitor ]]; then
-            exec /usr/bin/plasma-systemmonitor --page-name Processes
-        elif [[ -x /usr/bin/btop ]]; then
-            exec /usr/bin/btop
-        elif [[ -x /usr/bin/htop ]]; then
-            exec /usr/bin/htop
-        else
-            exit 127
+        # A TUI started without a terminal dies immediately, so give it one.
+        log "task manager"
+        if [ -x /usr/bin/ghostty ]; then
+            exec /usr/bin/ghostty -e /usr/bin/btop
+        elif [ -x /usr/bin/kitty ]; then
+            exec /usr/bin/kitty -e /usr/bin/btop
         fi
+        exec /usr/bin/btop
         ;;
     *)
-        printf 'Usage: %s {lock|unlock|suspend|hibernate|logout|shutdown|reboot|firmware|task-manager}\n' "$0" >&2
+        printf 'Usage: %s {lock|suspend|hibernate|logout|shutdown|reboot|firmware|task-manager}\n' "$0" >&2
         exit 2
         ;;
 esac
