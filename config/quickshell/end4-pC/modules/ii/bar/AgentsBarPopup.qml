@@ -17,22 +17,28 @@ LazyLoader {
     readonly property var providers: [
         { id: "codex", label: "Codex", asset: "codex.svg" },
         { id: "opencode-go", label: "OpenCode Go", asset: "opencodego.svg" },
-        { id: "deepseek", label: "DeepSeek", asset: "deepseek.svg" }
+        { id: "deepseek", label: "DeepSeek", asset: "deepseek.svg" },
+        { id: "hermes", label: "Hermes", asset: "hermes.png" }
     ]
     readonly property var selectedRows: AgentsBar.providerRows.filter(row => row.providerId === root.selectedProvider)
     signal requestClose()
 
-    readonly property var accountManagerProviders: ["codex", "opencode-go", "deepseek"]
+    readonly property var accountManagerProviders: ["codex", "opencode-go", "deepseek", "hermes"]
     readonly property bool hasAccountManager: root.accountManagerProviders.indexOf(root.selectedProvider) !== -1
     readonly property string accountManagerLabel: ({
         "codex": "Manage Codex account",
         "deepseek": "Manage DeepSeek account",
-        "opencode-go": "Manage OpenCode account"
+        "opencode-go": "Manage OpenCode account",
+        "hermes": "Open Nous Portal billing"
     })[root.selectedProvider] ?? "Manage account"
 
     function openAccountManager() {
         if (!root.hasAccountManager)
             return
+        if (root.selectedProvider === "hermes") {
+            Quickshell.execDetached(["xdg-open", "https://portal.nousresearch.com/billing"])
+            return
+        }
         const home = Quickshell.env("HOME")
         const command = root.selectedProvider === "codex"
             ? `"${home}/.local/bin/codex-account"`

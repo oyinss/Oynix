@@ -23,17 +23,21 @@ Singleton {
     property string lastError: ""
     property string selectedProvider: Config.options.custom.agentsBarProvider
     property var providerPrimaries: ({})
+    property var providerPrimaryTexts: ({})
     property var providerSources: ({})
     property list<var> providerRows: []
     property double lastUpdated: 0
 
     readonly property int displayPercent: Number(root.providerPrimaries[root.selectedProvider] ?? -1)
     readonly property bool warning: displayPercent >= 80
-    readonly property string displayText: displayPercent >= 0 ? `${displayPercent}%` : "--"
+    readonly property string displayText: displayPercent >= 0
+        ? `${displayPercent}%`
+        : (root.providerPrimaryTexts[root.selectedProvider] ?? "--")
     readonly property var providerAssets: ({
         "codex": "codex.svg",
         "opencode-go": "opencodego.svg",
-        "deepseek": "deepseek.svg"
+        "deepseek": "deepseek.svg",
+        "hermes": "hermes.png"
     })
     readonly property string selectedAsset: root.providerAssets[root.selectedProvider] ?? "opencodego.svg"
 
@@ -57,6 +61,7 @@ Singleton {
         case "codex": return "Codex"
         case "opencode-go": return "OpenCode Go"
         case "deepseek": return "DeepSeek"
+        case "hermes": return "Hermes"
         default: return id
         }
     }
@@ -102,6 +107,11 @@ Singleton {
                 ? -1
                 : Number(provider.primary)
             root.providerPrimaries = nextPrimaries
+            if (provider.primary_text) {
+                const nextTexts = Object.assign({}, root.providerPrimaryTexts)
+                nextTexts[provider.id] = String(provider.primary_text)
+                root.providerPrimaryTexts = nextTexts
+            }
             const nextSources = Object.assign({}, root.providerSources)
             if (provider.source)
                 nextSources[provider.id] = provider.source
@@ -152,7 +162,7 @@ Singleton {
             }])
         }
 
-        root.available = root.providerRows.some(row => row.percent >= 0)
+        root.available = root.providerRows.some(row => row.percent >= 0 || String(row.value ?? "").length > 0)
         root.lastError = ""
     }
 

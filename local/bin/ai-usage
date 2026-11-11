@@ -663,10 +663,147 @@ def fetch_deepseek() -> dict:
     return entry
 
 
+# ----------------------------------------------------------------------------- hermes
+
+HERMES_AUTH = HOME / ".hermes" / "auth.json"
+NOUS_GAUGE_FULL = 10_000
+
+
+def hermes_source() -> str:
+    try:
+        display_path = "~/" + str(HERMES_AUTH.relative_to(HOME))
+    except ValueError:
+        display_path = str(HERMES_AUTH)
+    return f"Nous Portal → {display_path}"
+
+
+def hermes_nous_state() -> tuple[str, str]:
+    """(access_token, portal_base_url) from Hermes' own Nous Portal login. Never printed."""
+    try:
+        state = json.loads(HERMES_AUTH.read_text())
+    except (OSError, ValueError):
+        return "", ""
+    nous = (state.get("providers") or {}).get("nous") or {}
+    token = nous.get("access_token") or nous.get("agent_key") or ""
+    base = (nous.get("portal_base_url") or "https://portal.nousresearch.com").rstrip("/")
+    return (token if isinstance(token, str) else ""), base
+
+
+def hermes_windows(account: dict) -> list[dict]:
+    """Server allowances as percent-used windows: ``usage_window.gauges`` carries ``used_bp``
+    (basis points, 10000 = full) in display order. Older accounts send no list at all."""
+    gauges = ((account.get("usage_window") or {}).get("gauges"))
+    if not isinstance(gauges, list):
+        return []
+    windows: list[dict] = []
+    seen: set[str] = set()
+    for gauge in gauges:
+        if not isinstance(gauge, dict):
+            continue
+        gid = gauge.get("id")
+        used_bp = gauge.get("used_bp")
+        if not isinstance(gid, str) or not gid or gid in seen:
+            continue
+        if isinstance(used_bp, bool) or not isinstance(used_bp, int) or not 0 <= used_bp <= NOUS_GAUGE_FULL:
+            continue
+        seen.add(gid)
+        label = gauge.get("label")
+        window = {
+            "id": gid,
+            "label": label if isinstance(label, str) and label.strip() else gid,
+            "used_percent": round(used_bp / NOUS_GAUGE_FULL * 100, 1),
+        }
+        resets_at_ms = gauge.get("resets_at_ms")
+        if isinstance(resets_at_ms, int) and not isinstance(resets_at_ms, bool) and resets_at_ms > 0:
+            window["resets_at"] = resets_at_ms // 1000
+        windows.append(window)
+    return windows
+
+
+def hermes_usd(value) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
+
+
+def fetch_hermes() -> dict:
+    entry: dict = {
+        "id": "hermes",
+        "label": "Hermes",
+        "icon": "hermes-mark",
+        "source": hermes_source(),
+        "plan": "",
+        "primary": None,
+        "primary_text": "",
+        "warning": False,
+        "windows": [],
+        "extras": [],
+        "notes": [],
+        "error": "",
+    }
+    token, portal = hermes_nous_state()
+    if not token:
+        entry["error"] = "no Nous Portal login in Hermes"
+        return entry
+
+    status, body = http_get(
+        f"{portal}/api/oauth/account",
+        {"Authorization": f"Bearer {token}", "Accept": "application/json", "User-Agent": USER_AGENT},
+    )
+    if status in (401, 403):
+        entry["error"] = "Nous Portal token rejected (run `hermes portal login`)"
+        return entry
+    if status != 200:
+        entry["error"] = f"Nous Portal error {status}"
+        return entry
+    try:
+        account = json.loads(body)
+    except ValueError:
+        entry["error"] = "unparseable Nous Portal response"
+        return entry
+    if not isinstance(account, dict):
+        entry["error"] = "unexpected Nous Portal response"
+        return entry
+
+    subscription = account.get("subscription") or {}
+    plan = subscription.get("plan")
+    if isinstance(plan, str) and plan:
+        entry["plan"] = plan
+    tier = subscription.get("tier")
+    if entry["plan"] and isinstance(tier, int) and not isinstance(tier, bool):
+        entry["plan"] = f"{entry['plan']} · tier {tier}"
+
+    entry["windows"] = hermes_windows(account)
+
+    # What the Portal actually exposes for this account: credit balances, not a rolling quota.
+    purchased = hermes_usd(account.get("purchased_credits_remaining"))
+    remaining = hermes_usd(subscription.get("credits_remaining"))
+    total = None
+    for candidate in (purchased, remaining):
+        if candidate is not None:
+            total = (total or 0.0) + candidate
+    if total is not None:
+        entry["extras"].append({"label": "Credits remaining", "value": f"${total:,.2f}"})
+        if not entry["windows"]:
+            entry["primary_text"] = f"${total:,.2f}"
+    monthly_credits = hermes_usd(subscription.get("monthly_credits"))
+    if monthly_credits is not None:
+        entry["extras"].append({"label": "Monthly included credits", "value": f"${monthly_credits:,.2f}"})
+    period_end = subscription.get("current_period_end")
+    if isinstance(period_end, str) and period_end:
+        entry["extras"].append({"label": "Renews", "value": period_end[:10]})
+
+    if not entry["windows"] and not entry["extras"]:
+        entry["error"] = "Nous Portal returned no usage data"
+    elif not entry["windows"]:
+        entry["notes"].append("No rolling quota window on this account — showing credit balance")
+    return entry
+
+
 # ----------------------------------------------------------------------------- main
 
 PRIMARY_WINDOW = {"codex": "primary", "opencode-go": "weekly"}
-FETCHERS = (fetch_codex, fetch_opencode_go, fetch_deepseek)
+FETCHERS = (fetch_codex, fetch_opencode_go, fetch_deepseek, fetch_hermes)
 
 
 def main() -> int:
