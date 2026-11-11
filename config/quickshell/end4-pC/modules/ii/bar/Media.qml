@@ -21,11 +21,18 @@ Item {
     property bool isMaterial: Config.options.bar.cornerStyle === 3
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
 
-    readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media")
+    // MPRIS sources such as KDE Connect mirror phone apps (X/TikTok/YouTube) that put
+    // whole multi-line captions in the title. Newlines would make the pill render as
+    // several stacked lines and spill outside the bar, so flatten them to one line.
+    function flattenLine(value) {
+        return String(value ?? "").replace(/\s*[\r\n]+\s*/g, " ").trim();
+    }
+
+    readonly property string cleanedTitle: StringUtils.cleanMusicTitle(root.trackTitle) || Translation.tr("No media")
 
     property var    artUrl:      activePlayer?.trackArtUrl ?? ""
-    property string trackTitle:  activePlayer?.trackTitle  ?? ""
-    property string trackArtist: activePlayer?.trackArtist ?? ""
+    property string trackTitle:  root.flattenLine(activePlayer?.trackTitle)
+    property string trackArtist: root.flattenLine(activePlayer?.trackArtist)
     property bool   isPlaying:   activePlayer?.isPlaying   ?? false
     property bool   hasTrack:    trackTitle.length > 0
 
@@ -181,6 +188,8 @@ Item {
                 Layout.rightMargin: 0
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
+                wrapMode: Text.NoWrap
+                maximumLineCount: 1
                 color: Appearance.colors.colOnLayer1
                 text: Config.options.bar.media.onlyTitle ? root.cleanedTitle : `${root.cleanedTitle}${root.activePlayer?.trackArtist ? ' • ' + root.activePlayer.trackArtist : ''}`
             }
@@ -258,6 +267,8 @@ Item {
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colOnSecondaryContainer
                             elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                            maximumLineCount: 1
                             Layout.maximumWidth: 120
                         }
 
@@ -267,6 +278,8 @@ Item {
                             color: Appearance.colors.colOnSecondaryContainer
                             opacity: 0.7
                             elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                            maximumLineCount: 1
                             Layout.rightMargin: 8
                             Layout.maximumWidth: 120
                             text: SystemInfo.distroName
@@ -337,6 +350,8 @@ Item {
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colOnSecondaryContainer
                             elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                            maximumLineCount: 1
                             Layout.maximumWidth: 120
                             Behavior on text {
                                 SequentialAnimation {
@@ -353,6 +368,8 @@ Item {
                             font.pixelSize: Appearance.font.pixelSize.smallie
                             color: Appearance.colors.colOnSecondaryContainer
                             elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
+                            maximumLineCount: 1
                             opacity: 0.7
                             Layout.maximumWidth: 120
                             Behavior on text {

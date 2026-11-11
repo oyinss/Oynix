@@ -13,6 +13,11 @@ Item {
     required property Item di
     anchors.fill: parent
 
+    // Keep multi-line MPRIS titles (KDE Connect mirrors phone media) on one line.
+    function flattenLine(value) {
+        return String(value ?? "").replace(/\s*[\r\n]+\s*/g, " ").trim()
+    }
+
     Rectangle {
         id: mediaMask
         anchors.fill: parent
@@ -71,14 +76,14 @@ Item {
         StyledText {
             id: trackTitleMetrics
             visible: false
-            text: root.activePlayer?.trackTitle ?? ""
+            text: root.flattenLine(root.activePlayer?.trackTitle)
             font.pixelSize: Appearance.font.pixelSize.smaller
             font.weight: Font.DemiBold
         }
         StyledText {
             id: trackArtistMetrics
             visible: false
-            text: root.activePlayer?.trackArtist ?? ""
+            text: root.flattenLine(root.activePlayer?.trackArtist)
             font.pixelSize: Appearance.font.pixelSize.smallest
         }
 
@@ -102,7 +107,7 @@ Item {
 
             StyledText {
                 Layout.fillWidth: true
-                text: root.activePlayer?.trackTitle ?? ""
+                text: root.flattenLine(root.activePlayer?.trackTitle)
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 font.weight: Font.DemiBold
                 color: Appearance.colors.colOnLayer0
@@ -112,7 +117,7 @@ Item {
             }
             StyledText {
                 Layout.fillWidth: true
-                text: root.activePlayer?.trackArtist ?? ""
+                text: root.flattenLine(root.activePlayer?.trackArtist)
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 color: Appearance.colors.colOnLayer0
                 opacity: 0.7
