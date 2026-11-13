@@ -25,7 +25,10 @@ alias root="sudo su"
 codei() {
   code-insiders "$@"
 }
-zz() {
+# Shared picker for zz/zzc: list zoxide's known directories in fzf and print the
+# chosen absolute path on stdout. Nothing is printed when the picker is
+# cancelled, so callers can do `target=$(_zz_pick)` without capturing UI noise.
+_zz_pick() {
   local yellow=$'\033[38;5;221m'
   local cyan=$'\033[38;5;80m'
   local purple=$'\033[38;5;141m'
@@ -34,7 +37,7 @@ zz() {
   local zoxide_bin="${commands[zoxide]}"
   [[ -z "$zoxide_bin" && -x /usr/bin/zoxide ]] && zoxide_bin=/usr/bin/zoxide
   if [[ -z "$zoxide_bin" ]]; then
-    print -u2 -- "zz: zoxide is installed but is not available in PATH"
+    print -u2 -- "zz/zzc: zoxide is installed but is not available in PATH"
     return 127
   fi
 
@@ -47,19 +50,46 @@ zz() {
       --ansi \
       --height=40% \
       --reverse \
-      --prompt="dir > " \
+      --prompt="${_ZZ_PROMPT:-dir > }" \
       --delimiter=$'\t' \
       --with-nth=1,2,3 \
       --nth=2
-  )
+  ) || return 1
 
-  [[ -z "$selection" ]] && return
+  [[ -z "$selection" ]] && return 1
 
-  local path
-  path="${selection##*$'\t'}"
-  path="${path#${purple}}"
-  path="${path%${reset}}"
-  [[ -n "$path" ]] && cd "$path" 2>/dev/null || echo "No such directory: $path"
+  local target
+  target="${selection##*$'\t'}"
+  target="${target#${purple}}"
+  target="${target%${reset}}"
+  [[ -z "$target" ]] && return 1
+  print -r -- "$target"
+}
+
+# Jump to a directory from zoxide's history.
+zz() {
+  local target
+  target=$(_zz_pick "$@") || return
+  cd "$target" 2>/dev/null || print -u2 -- "No such directory: $target"
+}
+
+# Same picker, but copy the selected absolute path to the clipboard instead of
+# entering it. The path is also printed, so `target=$(zzc)` works for scripting.
+zzc() {
+  local target
+  _ZZ_PROMPT='copy path > ' target=$(_zz_pick "$@") || return
+
+  if command -v wl-copy >/dev/null 2>&1; then
+    print -rn -- "$target" | wl-copy
+  elif command -v xclip >/dev/null 2>&1; then
+    print -rn -- "$target" | xclip -selection clipboard
+  else
+    print -u2 -- "zzc: no clipboard tool found (need wl-copy or xclip)"
+    return 127
+  fi
+
+  print -r -- "$target"
+  notify-send -a "zzc" "Path copied" "$target" >/dev/null 2>&1 || true
 }
 
 nuke() {
