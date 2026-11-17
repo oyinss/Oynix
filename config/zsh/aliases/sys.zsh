@@ -19,8 +19,16 @@ alias rel="exec zsh"
 alias logout="qdbus org.kde.KWin /Session org.kde.KWin.Session.quit"
 alias bak="$HOME/Oynix/backup.sh"
 alias hibernate="systemctl hibernate"
-alias suspend="systemctl suspend"
-alias suspend-i="sudo /bin/systemctl suspend -i"
+# Sleep now, without sudo. Plain suspend first, so NetworkManager, Discord and
+# friends get to run their delay inhibitors; if something holds a *block*
+# inhibitor (an agent run, a download, a call) retry ignoring it. The -i variant
+# is password-free because of etc/polkit-1/rules.d/49-suspend-ignore-inhibit.rules.
+suspend() {
+  systemctl suspend --no-block 2>/dev/null && return 0
+  print -u2 -- "suspend: blocked by an inhibitor, forcing"
+  systemctl suspend -i --no-block
+}
+alias suspend-i="systemctl suspend -i"
 alias root="sudo su"
 codei() {
   code-insiders "$@"

@@ -1,0 +1,20 @@
+// Allow a local, active member of wheel to suspend even when an application
+// holds a block inhibitor (an agent run, a download, a call, anything that
+// claims "do not sleep now").
+//
+// Without this rule the action
+//   org.freedesktop.login1.suspend-ignore-inhibit
+// defaults to auth_admin_keep, which is why "systemctl suspend -i" normally
+// asks for a password or has to be run with sudo.
+//
+// The plain "systemctl suspend" action is already allowed for an active session
+// without any rule; this only adds the "ignore the inhibitors" variant.
+
+polkit.addRule(function (action, subject) {
+    if (action.id === "org.freedesktop.login1.suspend-ignore-inhibit" &&
+        subject.local &&
+        subject.active &&
+        subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});
