@@ -25,7 +25,11 @@ Singleton {
     }
 
     function suspend() {
-        Quickshell.execDetached(["bash", "-c", "systemctl suspend || loginctl suspend"]);
+        // Same two-step the shell `suspend` function uses, so the button and the
+        // terminal cannot diverge: try a normal suspend, and if a block inhibitor
+        // refuses it (an agent run, a download), force it. --no-block keeps the
+        // caller out of the suspend transition.
+        Quickshell.execDetached(["bash", "-c", "systemctl suspend --no-block || systemctl suspend -i --no-block || loginctl suspend -i"]);
     }
 
     function logout() {
